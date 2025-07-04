@@ -14,10 +14,10 @@ export default function DashboardLayout({
       <div className="w-[14%] md:w-[8%] lg:w-[16%] xl:w-[14%] p-4">
         <Link
           href="/"
-          className="flex items-center justify-center lg:justify-start gap-2"
+          className="flex "
         >
-          <Image src="/logo.png" alt="logo" width={62} height={62} />
-          <span className="hidden md:block font-bold">NextGen LMS</span>
+          <Image src="/logo.png" alt="logo" width={130} height={82} />
+          {/* <span className="hidden md:block font-bold">NextGen LMS</span> */}
         </Link>
         <Menu />
       </div>

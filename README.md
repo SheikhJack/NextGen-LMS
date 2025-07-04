@@ -1,4 +1,4 @@
-# Lama Dev School Management Dashboard
+# Nachi Learner Management Dashboard
 
 ## Getting Started
 

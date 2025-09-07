@@ -5,10 +5,15 @@ import moment from "moment";
 import { calendarEvents } from "@/lib/data";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { useState } from "react";
+import { CalendarEvent } from "./BigCalendarContainer";
+
+type BigCalendarProps = {
+  data: CalendarEvent[];
+};
 
 const localizer = momentLocalizer(moment);
 
-const BigCalendar = () => {
+const BigCalendar = ({data}: BigCalendarProps) => {
   const [view, setView] = useState<View>(Views.WORK_WEEK);
 
   const handleOnChangeView = (selectedView: View) => {

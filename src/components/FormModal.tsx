@@ -1,26 +1,127 @@
 "use client";
 
+import {
+  deleteAnnouncement,
+  deleteClass,
+  deleteExam,
+  deleteStudent,
+  deleteSubject,
+  deleteTeacher,
+  deleteEvent
+} from "@/lib/actions";
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { toast } from "react-toastify";
+import { FormContainerProps } from "./FormContainer";
+import Loader from "./Loader";
 
-// USE LAZY LOADING
+const deleteActionMap = {
+  subject: deleteSubject,
+  class: deleteClass,
+  teacher: deleteTeacher,
+  student: deleteStudent,
+  exam: deleteExam,
+  parent: deleteSubject,
+  lesson: deleteSubject,
+  assignment: deleteSubject,
+  result: deleteSubject,
+  attendance: deleteSubject,
+  announcement: deleteAnnouncement,
+  event: deleteEvent,
+};
 
-// import TeacherForm from "./forms/TeacherForm";
-// import StudentForm from "./forms/StudentForm";
+
 
 const TeacherForm = dynamic(() => import("./forms/TeacherForm"), {
-  loading: () => <h1>Loading...</h1>,
+  loading: () => <h1><Loader /></h1>,
 });
 const StudentForm = dynamic(() => import("./forms/StudentForm"), {
-  loading: () => <h1>Loading...</h1>,
+  loading: () => <h1><Loader /></h1>,
+});
+const SubjectForm = dynamic(() => import("./forms/SubjectForm"), {
+  loading: () => <h1><Loader /></h1>,
+});
+const ClassForm = dynamic(() => import("./forms/ClassForm"), {
+  loading: () => <h1><Loader /></h1>,
+});
+const ExamForm = dynamic(() => import("./forms/ExamForm"), {
+  loading: () => <h1><Loader /></h1>,
+});
+const AnnouncementForm = dynamic(() => import("./forms/AnnouncementForm"), {
+  loading: () => <h1><Loader /></h1>,
+});
+const EventForm = dynamic(() => import("./forms/EventForm"), {
+  loading: () => <h1><Loader /></h1>,
 });
 
+
 const forms: {
-  [key: string]: (type: "create" | "update", data?: any) => JSX.Element;
+  [key: string]: (
+    setOpen: Dispatch<SetStateAction<boolean>>,
+    type: "create" | "update",
+    data?: any,
+    relatedData?: any
+  ) => JSX.Element;
 } = {
-  teacher: (type, data) => <TeacherForm type={type} data={data} />,
-  student: (type, data) => <StudentForm type={type} data={data} />
+  subject: (setOpen, type, data, relatedData) => (
+    <SubjectForm
+      type={type}
+      data={data}
+      setOpen={setOpen}
+      relatedData={relatedData}
+    />
+  ),
+  class: (setOpen, type, data, relatedData) => (
+    <ClassForm
+      type={type}
+      data={data}
+      setOpen={setOpen}
+      relatedData={relatedData}
+    />
+  ),
+  teacher: (setOpen, type, data, relatedData) => (
+    <TeacherForm
+      type={type}
+      data={data}
+      setOpen={setOpen}
+      relatedData={relatedData}
+    />
+  ),
+  student: (setOpen, type, data, relatedData) => (
+    <StudentForm
+      type={type}
+      data={data}
+      setOpen={setOpen}
+      relatedData={relatedData}
+    />
+  ),
+  exam: (setOpen, type, data, relatedData) => (
+    <ExamForm
+      type={type}
+      data={data}
+      setOpen={setOpen}
+      relatedData={relatedData}
+    />
+  ),
+   announcement: (setOpen, type, data, relatedData) => (
+    <AnnouncementForm
+      type={type}
+      data={data}
+      setOpen={setOpen}
+      relatedData={relatedData}
+    />
+  ),
+   event: (setOpen, type, data, relatedData) => (
+    <EventForm
+      type={type}
+      data={data}
+      setOpen={setOpen}
+      relatedData={relatedData}
+    />
+  ),
+
 };
 
 const FormModal = ({
@@ -28,49 +129,94 @@ const FormModal = ({
   type,
   data,
   id,
-}: {
-  table:
-    | "teacher"
-    | "student"
-    | "parent"
-    | "subject"
-    | "class"
-    | "lesson"
-    | "exam"
-    | "assignment"
-    | "result"
-    | "attendance"
-    | "event"
-    | "announcement";
-  type: "create" | "update" | "delete";
-  data?: any;
-  id?: number;
-}) => {
+  relatedData,
+}: FormContainerProps & { relatedData?: any }) => {
   const size = type === "create" ? "w-8 h-8" : "w-7 h-7";
   const bgColor =
     type === "create"
       ? "bg-lamaYellow"
       : type === "update"
-      ? "bg-lamaSky"
-      : "bg-lamaPurple";
+        ? "bg-lamaSky"
+        : "bg-lamaPurple";
 
   const [open, setOpen] = useState(false);
+  const [deleteState, setDeleteState] = useState({
+    success: false,
+    error: false,
+  });
+
+  const router = useRouter();
+
+  useEffect(() => {
+    if (deleteState.success) {
+      toast(`${table} has been deleted!`);
+      setOpen(false);
+      router.refresh();
+    }
+  }, [deleteState, router, table]);
+
+  const handleDelete = async (formData: FormData) => {
+    try {
+      // Check if the delete action exists for this table type
+      const deleteAction = deleteActionMap[table as keyof typeof deleteActionMap];
+      if (!deleteAction) {
+        throw new Error(`No delete action found for ${table}`);
+      }
+
+      const result = await deleteAction(
+        { success: false, error: false },
+        formData
+      );
+      setDeleteState(result);
+
+      if (result.success) {
+        toast(`${table} has been deleted!`);
+        setOpen(false);
+        router.refresh();
+      }
+    } catch (error) {
+      setDeleteState({ success: false, error: true });
+      toast.error(`Failed to delete ${table}`);
+    }
+  };
 
   const Form = () => {
-    return type === "delete" && id ? (
-      <form action="" className="p-4 flex flex-col gap-4">
-        <span className="text-center font-medium">
-          All data will be lost. Are you sure you want to delete this {table}?
-        </span>
-        <button className="bg-red-700 text-white py-2 px-4 rounded-md border-none w-max self-center">
-          Delete
-        </button>
-      </form>
-    ) : type === "create" || type === "update" ? (
-      forms[table](type, data)
-    ) : (
-      "Form not found!"
-    );
+    if (type === "delete" && id) {
+      return (
+        <form action={handleDelete} className="p-4 flex flex-col gap-4">
+          <input type="hidden" name="id" value={id} />
+          <span className="text-center font-medium">
+            All data will be lost. Are you sure you want to delete this {table}?
+          </span>
+          <button
+            type="submit"
+            className="bg-red-700 text-white py-2 px-4 rounded-md border-none w-max self-center"
+          >
+            Delete
+          </button>
+        </form>
+      );
+    } else if (type === "create" || type === "update") {
+      // Check if form exists for this table type
+      const FormComponent = forms[table];
+      if (FormComponent && typeof FormComponent === 'function') {
+        return FormComponent(setOpen, type, data, relatedData);
+      } else {
+        return (
+          <div className="p-4">
+            <p className="text-center text-red-500">
+              Form for {table} is not implemented yet.
+            </p>
+          </div>
+        );
+      }
+    } else {
+      return (
+        <div className="p-4">
+          <p className="text-center text-red-500">Form not found!</p>
+        </div>
+      );
+    }
   };
 
   return (

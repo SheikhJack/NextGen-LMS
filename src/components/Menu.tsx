@@ -1,4 +1,6 @@
-import { role } from "@/lib/data";
+"use client"
+
+import { useUser } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -9,7 +11,7 @@ const menuItems = [
       {
         icon: "/home.png",
         label: "Home",
-        href: "/",
+        href: "/admin",
         visible: ["admin", "teacher", "student", "parent"],
       },
       {
@@ -46,6 +48,12 @@ const menuItems = [
         icon: "/lesson.png",
         label: "Lessons",
         href: "/list/lessons",
+        visible: ["admin", "teacher"],
+      },
+      {
+        icon: "/posts.png",
+        label: "Posts",
+        href: "/list/posts",
         visible: ["admin", "teacher"],
       },
       {
@@ -117,24 +125,38 @@ const menuItems = [
   },
 ];
 
-const Menu = () => {
+const Menu = ({ collapsed }: { collapsed: boolean }) => {
+
+  const { isLoaded, isSignedIn, user } = useUser();
+
+  if (!isLoaded || !isSignedIn || !user) {
+    return null;
+  }
+
+  const role = (user as any)?.publicMetadata?.role;
+
   return (
     <div className="mt-4 text-sm">
       {menuItems.map((i) => (
         <div className="flex flex-col gap-2" key={i.title}>
-          <span className="hidden lg:block text-gray-400 font-light my-4">
-            {i.title}
-          </span>
+          {!collapsed && (
+            <span className="hidden lg:block text-gray-400 font-light my-4">
+              {i.title}
+            </span>
+          )}
           {i.items.map((item) => {
             if (item.visible.includes(role)) {
               return (
                 <Link
                   href={item.href}
                   key={item.label}
-                  className="flex items-center justify-center lg:justify-start gap-4 text-gray-500 py-2 md:px-2 rounded-md hover:bg-lamaSkyLight"
+                  className={`flex items-center ${collapsed ? 'justify-center' : 'justify-start'} gap-4 text-gray-700 py-2 px-2 rounded-md hover:bg-lamaSkyLight`}
+                  title={collapsed ? item.label : ''}
                 >
                   <Image src={item.icon} alt="" width={20} height={20} />
-                  <span className="hidden lg:block">{item.label}</span>
+                  {!collapsed && (
+                    <span className="hidden lg:block">{item.label}</span>
+                  )}
                 </Link>
               );
             }
@@ -144,5 +166,6 @@ const Menu = () => {
     </div>
   );
 };
+
 
 export default Menu;

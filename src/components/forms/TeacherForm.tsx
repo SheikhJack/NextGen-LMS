@@ -1,5 +1,6 @@
 "use client";
 
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -28,11 +29,15 @@ const schema = z.object({
 type Inputs = z.infer<typeof schema>;
 
 const TeacherForm = ({
-  type,
+   type,
   data,
+  setOpen,
+  relatedData,
 }: {
   type: "create" | "update";
   data?: any;
+  setOpen: Dispatch<SetStateAction<boolean>>;
+  relatedData?: any;
 }) => {
   const {
     register,

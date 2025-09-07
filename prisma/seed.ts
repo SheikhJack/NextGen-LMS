@@ -190,15 +190,17 @@ async function main() {
   }
 
   // ANNOUNCEMENT
-  for (let i = 1; i <= 5; i++) {
-    await prisma.announcement.create({
-      data: {
-        title: `Announcement ${i}`, 
-        description: `Description for Announcement ${i}`, 
-        date: new Date(), 
-        classId: (i % 5) + 1, 
-      },
-    });
+    for (let i = 1; i <= 5; i++) {
+   await prisma.announcement.create({
+  data: 
+    {
+      title: "Welcome Back",
+      description: "Welcome message",
+      content: "Detailed welcome message content here", 
+      date: new Date(),
+      classId: 1,
+    },
+   });
   }
 
   console.log("Seeding completed successfully.");

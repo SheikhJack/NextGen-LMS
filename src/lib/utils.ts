@@ -1,6 +1,6 @@
-// IT APPEARS THAT BIG CALENDAR SHOWS THE LAST WEEK WHEN THE CURRENT DAY IS A WEEKEND.
-// FOR THIS REASON WE'LL GET THE LAST WEEK AS THE REFERENCE WEEK.
-// IN THE TUTORIAL WE'RE TAKING THE NEXT WEEK AS THE REFERENCE WEEK.
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
+import { PaymentMethod } from "./types";
 
 const getLatestMonday = (): Date => {
   const today = new Date();
@@ -43,3 +43,29 @@ export const adjustScheduleToCurrentWeek = (
     };
   });
 };
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+
+
+export function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'BWP',
+  }).format(amount);
+}
+
+
+export const paymentMethodDisplayNames: Record<PaymentMethod, string> = {
+  CASH: 'Cash',
+  BANK_TRANSFER: 'Bank Transfer',
+  CARD: 'Credit Card',
+  MOBILE_MONEY: 'Mobile Money'
+};
+
+export const getPaymentMethodDisplayName = (method: PaymentMethod): string => {
+  return paymentMethodDisplayNames[method] || method;
+};
+
+// In your components, use:

@@ -1,11 +1,6 @@
 import prisma from "@/lib/prisma";
-import { Event, Class } from "@prisma/client";
 
-type EventWithClass = Event & {
-  class: Class | null;
-};
-
-const EventList = async ({ dateParam }: { dateParam: string | undefined }) => {
+const EventList = async ({ dateParam = undefined }: { dateParam?: string }) => {
   const date = dateParam ? new Date(dateParam) : new Date();
 
   const data = await prisma.event.findMany({
@@ -16,11 +11,11 @@ const EventList = async ({ dateParam }: { dateParam: string | undefined }) => {
       },
     },
     include: {
-      class: true, // Include class relation
+      class: true, 
     },
   });
 
-  return data.map((event: EventWithClass) => (
+  return data.map((event: any) => (
     <div
       className="p-5 rounded-md border-2 border-gray-100 border-t-4 odd:border-t-lamaSky even:border-t-lamaPurple"
       key={event.id}

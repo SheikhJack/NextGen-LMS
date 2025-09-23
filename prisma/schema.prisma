@@ -1,5 +1,9 @@
+// Remove the deprecated preview feature
 generator client {
-  provider = "prisma-client-js"
+  provider    = "prisma-client-js"
+  maxPoolSize = 15
+  minPoolSize = 3
+  // Remove the metrics preview feature or use valid ones
 }
 
 datasource db {
@@ -8,9 +12,83 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+// ========== ENUMS ==========
+enum UserSex {
+  MALE
+  FEMALE
+}
+
+enum Day {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+enum FeeFrequency {
+  ONE_TIME
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  CARD
+  MOBILE_MONEY
+  OTHER
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  OTHER
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum AdmissionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WAITLISTED
+}
+
+enum FeeStatus {
+  PENDING
+  PAID
+  WAIVED
+}
+
+// ADD THIS ENUM
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+// ========== MODELS ==========
 model Admin {
   id       String @id
   username String @unique
+  // ADD THIS RELATION FIELD
+  posts    Post[] // This is the opposite relation field
 }
 
 model Student {
@@ -34,6 +112,12 @@ model Student {
   class       Class        @relation(fields: [classId], references: [id])
   grade       Grade        @relation(fields: [gradeId], references: [id])
   parent      Parent       @relation(fields: [parentId], references: [id])
+
+  finance      StudentFinance?
+  transactions Transaction[]
+  invoices     Invoice[]
+  studentFees  StudentFee[]
+  admissions   Admission[]
 }
 
 model Teacher {
@@ -71,6 +155,8 @@ model Grade {
   level    Int       @unique
   classes  Class[]
   students Student[]
+
+  feeCategories FeeCategory[] @relation("FeeCategoryGrades")
 }
 
 model Class {
@@ -172,15 +258,201 @@ model Announcement {
   class       Class?   @relation(fields: [classId], references: [id])
 }
 
-enum UserSex {
-  MALE
-  FEMALE
+// ========== FINANCE MODELS ==========
+model FeeCategory {
+  id          String       @id @default(cuid())
+  name        String // Tuition, Books, Uniform, Activities, etc.
+  description String?
+  amount      Float
+  frequency   FeeFrequency
+  startDate   DateTime
+  endDate     DateTime?
+
+  applicableGrades Grade[]       @relation("FeeCategoryGrades")
+  invoiceItems     InvoiceItem[]
+  studentFees      StudentFee[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
-enum Day {
-  MONDAY
-  TUESDAY
-  WEDNESDAY
-  THURSDAY
-  FRIDAY
+model StudentFinance {
+  id          String  @id @default(cuid())
+  balance     Float   @default(0)
+  totalPaid   Float   @default(0)
+  totalDue    Float   @default(0)
+  paymentPlan String? // Custom payment plan description
+
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentId String  @unique // Added unique constraint for one-to-one
+
+  transactions Transaction[] @relation("StudentFinanceTransactions")
+  invoices     Invoice[]     @relation("StudentFinanceInvoices")
+  studentFees  StudentFee[]  @relation("StudentFinanceFees")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Transaction {
+  id            String            @id @default(cuid())
+  type          TransactionType
+  category      String
+  amount        Float
+  date          DateTime          @default(now())
+  description   String?
+  paymentMethod PaymentMethod
+  reference     String? // Transaction reference number
+  status        TransactionStatus @default(PENDING)
+  receiptUrl    String?
+
+  student   Student? @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentId String?
+
+  vendor   Vendor? @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  vendorId String?
+
+  invoice   Invoice? @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  invoiceId String?
+
+  studentFinance   StudentFinance? @relation("StudentFinanceTransactions", fields: [studentFinanceId], references: [id], onDelete: Cascade)
+  studentFinanceId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Invoice {
+  id            String        @id @default(cuid())
+  invoiceNumber String        @unique() // Auto-generated invoice number
+  totalAmount   Float
+  dueDate       DateTime
+  status        InvoiceStatus @default(PENDING)
+
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentId String
+
+  items        InvoiceItem[]
+  transactions Transaction[]
+
+  studentFinance   StudentFinance? @relation("StudentFinanceInvoices", fields: [studentFinanceId], references: [id], onDelete: Cascade)
+  studentFinanceId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model InvoiceItem {
+  id          String @id @default(cuid())
+  description String
+  amount      Float
+  quantity    Int    @default(1)
+
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  invoiceId String
+
+  feeCategory   FeeCategory? @relation(fields: [feeCategoryId], references: [id], onDelete: Cascade)
+  feeCategoryId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Vendor {
+  id       String  @id @default(cuid())
+  name     String
+  contact  String?
+  email    String?
+  phone    String?
+  category String? // Supplies, Services, Utilities, etc.
+
+  transactions Transaction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model StudentFee {
+  id       String    @id @default(cuid())
+  amount   Float
+  dueDate  DateTime
+  paid     Boolean   @default(false)
+  paidDate DateTime?
+
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentId String
+
+  feeCategory   FeeCategory @relation(fields: [feeCategoryId], references: [id], onDelete: Cascade)
+  feeCategoryId String
+
+  studentFinance   StudentFinance? @relation("StudentFinanceFees", fields: [studentFinanceId], references: [id], onDelete: Cascade)
+  studentFinanceId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ========== ADMISSION MODEL ==========
+model Admission {
+  id                   String          @id @default(cuid())
+  studentName          String
+  parentName           String
+  age                  Int
+  grade                String
+  status               AdmissionStatus @default(PENDING)
+  applicationDate      DateTime        @default(now())
+  birthDate            DateTime
+  bloodGroup           String?
+  allergies            String[] // Stored as JSON array
+  specialNeeds         String?
+  emergencyContact     String
+  medicalConditions    String?
+  previousSchool       String?
+  transportationNeeded Boolean         @default(false)
+  dietaryRestrictions  String?
+  registrationFee      Float?          @default(0)
+  feeStatus            FeeStatus?      @default(PENDING)
+  paymentDate          DateTime?
+  paymentMethod        PaymentMethod?
+  studentId            String?
+
+  // Relations
+  student Student? @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("admissions")
+}
+
+model SchoolFinance {
+  id            String @id @default("school-general")
+  balance       Float  @default(0)
+  totalIncome   Float  @default(0)
+  totalExpenses Float  @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("school_finance")
+}
+
+// ========== POST MODEL ==========
+model Post {
+  id            String     @id @default(cuid())
+  title         String
+  slug          String     @unique
+  content       String
+  excerpt       String?
+  imageUrl      String?
+  imagePublicId String?
+  status        PostStatus @default(DRAFT)
+  authorId      String
+  author        Admin      @relation(fields: [authorId], references: [id])
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  publishedAt DateTime?
+
+  @@map("posts")
 }

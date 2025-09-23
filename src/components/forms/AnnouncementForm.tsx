@@ -8,7 +8,7 @@ import { toast } from "react-toastify";
 interface AnnouncementFormProps {
     type: "create" | "update";
     data?: any;
-    setOpen: Dispatch<SetStateAction<boolean>>;
+    setOpen:  (open: boolean) => void; 
     relatedData?: any;
 }
 

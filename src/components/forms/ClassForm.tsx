@@ -28,7 +28,7 @@ const ClassForm = ({
 }: {
   type: "create" | "update";
   data?: any;
-  setOpen: Dispatch<SetStateAction<boolean>>;
+  setOpen:  (open: boolean) => void; 
   relatedData?: any;
 }) => {
   const {

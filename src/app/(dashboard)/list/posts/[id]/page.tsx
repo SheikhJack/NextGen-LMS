@@ -1,82 +1,108 @@
-import { useRouter } from 'next/router';
-import { BlogPost }  from '@/components/BlogPostCard';
+import CloudinaryImage from '@/components/CloudinaryImage';
+import { getPostBySlug } from '@/lib/actions';
 
 interface SinglePostPageProps {
-  post: BlogPost;
-  onEdit: (id: string) => void;
-  onDelete: (id: string) => void;
+  params: {
+    slug: string;
+  };
 }
 
-export default function SinglePostPage({ post, onEdit, onDelete }: SinglePostPageProps) {
-  const router = useRouter();
+export default async function SinglePostPage({ params }: SinglePostPageProps) {
+  const post = await getPostBySlug(params.slug);
 
   if (!post) {
-    return <div className="text-center py-8">Post not found</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Post Not Found</h1>
+          <p className="text-gray-600">The post you're looking for doesn't exist.</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">{post.title}</h1>
-        <div className="flex space-x-2">
-          <button
-            onClick={() => onEdit(post.id)}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded transition-colors"
-          >
-            Edit
-          </button>
-          <button
-            onClick={() => onDelete(post.id)}
-            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition-colors"
-          >
-            Delete
-          </button>
-        </div>
-      </div>
+    <article className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <header className="mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">{post.title}</h1>
+          
+          <div className="flex items-center space-x-4 text-gray-600 mb-6">
+            <span>By {post.author}</span>
+            <span>•</span>
+            <time dateTime={post.createdAt}>
+              {new Date(post.createdAt).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              })}
+            </time>
+          </div>
 
-      {/* Image */}
-      <div className="h-96 overflow-hidden rounded-lg mb-6">
-        <img
-          src={post.imageUrl || '/placeholder.jpg'}
-          alt={post.title}
-          className="w-full h-full object-cover"
+          {post.excerpt && (
+            <p className="text-xl text-gray-700 italic mb-6">{post.excerpt}</p>
+          )}
+        </header>
+
+        {/* Featured Image */}
+        {post.imageUrl && (
+          <div className="mb-8 rounded-lg overflow-hidden">
+            <CloudinaryImage
+              src={post.imageUrl}
+              alt={post.title}
+              width={800}
+              height={400}
+              className="w-full h-auto object-cover"
+              priority
+            />
+          </div>
+        )}
+
+        {/* Content */}
+        <div 
+          className="prose prose-lg max-w-none"
+          dangerouslySetInnerHTML={{ __html: post.content }}
         />
       </div>
-
-      {/* Meta */}
-      <div className="flex space-x-4 text-gray-600 text-sm mb-6">
-        <span>By {post.author || 'Unknown'}</span>
-        <span>{new Date(post.createdAt).toLocaleDateString()}</span>
-      </div>
-
-      {/* Content */}
-      <div className="prose max-w-none">
-        <p className="text-lg text-gray-800 mb-4">{post.intro}</p>
-        <p className="text-gray-700">{post.description}</p>
-      </div>
-    </div>
+    </article>
   );
 }
 
-export async function getServerSideProps(context: any) {
-  // In a real app, you would fetch the post data here
-  // const res = await fetch(`/api/posts/${context.params.id}`);
-  // const post = await res.json();
+// Generate static params for SSG
+export async function generateStaticParams() {
+  // You might want to fetch all post slugs here
+  // const posts = await getPosts(1, 100, 'PUBLISHED');
+  // return posts.posts.map((post) => ({ slug: post.slug }));
+  
+  return []; // Return empty array for dynamic generation
+}
 
-  const mockPost: BlogPost = {
-    id: context.params.id,
-    title: "Sample Post",
-    imageUrl: "/placeholder.jpg",
-    intro: "This is a sample blog post introduction",
-    description: "This is the full description of the blog post. It contains all the details and content that wasn't shown in the preview. It can be multiple paragraphs long and contain various formatting.",
-    createdAt: new Date().toISOString(),
-    author: "John Doe"
-  };
+export async function generateMetadata({ params }: SinglePostPageProps) {
+  const post = await getPostBySlug(params.slug);
+  
+  if (!post) {
+    return {
+      title: 'Post Not Found',
+    };
+  }
+
+  // Use excerpt or create a description from content
+  const description = post.excerpt || 
+    post.content
+      .replace(/<[^>]*>/g, '') // Remove HTML tags
+      .substring(0, 160) // Limit to 160 characters
+      .trim() + '...';
 
   return {
-    props: {
-      post: mockPost
-    }
+    title: post.title,
+    description: description,
+    openGraph: {
+      title: post.title,
+      description: description,
+      images: post.imageUrl ? [post.imageUrl] : [],
+      type: 'article',
+      publishedTime: post.publishedAt,
+    },
   };
 }

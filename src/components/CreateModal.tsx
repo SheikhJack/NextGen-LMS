@@ -1,100 +1,186 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useActionState, useEffect } from 'react';
+import RichTextEditor from './RichTextEditor';
+import { createPost } from '@/lib/actions';
+import { useAuth } from '@clerk/nextjs';
 
-export default function CreatePostModal({ isOpen, onClose, onCreate }: {
+interface CreatePostModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (post: Post) => void;
-}) {
+  onSuccess: () => void;
+}
+
+export default function CreatePostModal({ isOpen, onClose, onSuccess }: CreatePostModalProps) {
+  const { userId } = useAuth();
+  const [state, formAction, pending] = useActionState(createPost, {
+    success: false,
+    error: false,
+    message: ''
+  });
+  
   const [formData, setFormData] = useState({
     title: '',
-    imageUrl: '',
-    intro: '',
-    description: '',
-    author: '',
+    slug: '',
+    excerpt: '',
+    content: '',
+    status: 'DRAFT' as 'DRAFT' | 'PUBLISHED',
+    image: null as File | null,
+    imagePreview: '',
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  useEffect(() => {
+    if (state.success) {
+      onSuccess();
+      onClose();
+      // Reset form
+      setFormData({
+        title: '',
+        slug: '',
+        excerpt: '',
+        content: '',
+        status: 'DRAFT',
+        image: null,
+        imagePreview: '',
+      });
+    }
+  }, [state.success, onSuccess, onClose]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = () => {
-    const newPost = {
-      id: Date.now().toString(),
-      ...formData,
-      createdAt: new Date().toISOString(),
-    };
-    onCreate(newPost);
-    onClose();
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setFormData(prev => ({
+        ...prev,
+        image: file,
+        imagePreview: URL.createObjectURL(file)
+      }));
+    }
+  };
+
+  const generateSlug = (title: string) => {
+    return title
+      .toLowerCase()
+      .replace(/[^a-z0-9 -]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim();
+  };
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const title = e.target.value;
+    setFormData(prev => ({
+      ...prev,
+      title,
+      slug: generateSlug(title)
+    }));
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-lg shadow-lg">
-        <h2 className="text-xl font-semibold mb-4">Create New Post</h2>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <h2 className="text-2xl font-bold mb-4">Create New Post</h2>
+          
+          {state.error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+              {state.message}
+            </div>
+          )}
 
-        <input
-          name="title"
-          placeholder="Title"
-          value={formData.title}
-          onChange={handleChange}
-          className="w-full mb-3 p-2 border rounded"
-        />
+          <form action={formAction} className="space-y-4">
+            <input type="hidden" name="authorId" value={userId || ''} />
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+              <input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleTitleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
 
-        <input
-          name="imageUrl"
-          placeholder="Image URL"
-          value={formData.imageUrl}
-          onChange={handleChange}
-          className="w-full mb-3 p-2 border rounded"
-        />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Slug *</label>
+              <input
+                type="text"
+                name="slug"
+                value={formData.slug}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
 
-        <input
-          name="intro"
-          placeholder="Intro"
-          value={formData.intro}
-          onChange={handleChange}
-          className="w-full mb-3 p-2 border rounded"
-        />
+            
 
-        <textarea
-          name="description"
-          placeholder="Description"
-          value={formData.description}
-          onChange={handleChange}
-          className="w-full mb-3 p-2 border rounded h-24"
-        />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Content *</label>
+              <RichTextEditor
+                content={formData.content}
+                onChange={(content) => setFormData(prev => ({ ...prev, content }))}
+              />
+              <input type="hidden" name="content" value={formData.content} />
+            </div>
 
-        <input
-          name="author"
-          placeholder="Author"
-          value={formData.author}
-          onChange={handleChange}
-          className="w-full mb-3 p-2 border rounded"
-        />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Featured Image</label>
+              <input
+                type="file"
+                name="image"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              />
+              {formData.imagePreview && (
+                <div className="mt-2">
+                  <img src={formData.imagePreview} alt="Preview" className="max-w-xs max-h-32 object-cover rounded" />
+                </div>
+              )}
+            </div>
 
-        <div className="flex justify-end gap-2">
-          <button onClick={onClose} className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
-            Cancel
-          </button>
-          <button onClick={handleSubmit} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-            Create
-          </button>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="DRAFT">Draft</option>
+                <option value="PUBLISHED">Published</option>
+              </select>
+            </div>
+
+            <div className="flex justify-end space-x-3 pt-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                disabled={pending}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={pending}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+              >
+                {pending ? 'Creating...' : 'Create Post'}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
   );
 }
-
-type Post = {
-  id: string;
-  title: string;
-  imageUrl: string;
-  intro: string;
-  description: string;
-  createdAt: string;
-  author: string;
-};

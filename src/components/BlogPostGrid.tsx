@@ -1,39 +1,59 @@
-import BlogPostCard, { BlogPost } from "./BlogPostCard";
+import { PostCard } from "./BlogPostCard";
+import  Pagination  from './Pagination';
+import { BlogPost } from "@/lib/types";
 
-
-
-interface BlogPostsGridProps {
-  posts: BlogPost[];
-  onCreate: () => void;
+interface PostsGridProps {
+  posts:  BlogPost[];
+  currentPage: number;
+  totalCount: number;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
+  onPageChange: (newPage: number) => void;
+  itemsPerPage?: number;
+  onCreate: () => void;
+  deletingPostId?: string | null;
 }
 
-export default function BlogPostsGrid({ posts, onCreate, onEdit, onDelete }: BlogPostsGridProps) {
+const PostsGrid = ({
+  posts,
+  currentPage,
+  totalCount,
+  onEdit,
+  onDelete,
+  onPageChange,
+  onCreate,
+  itemsPerPage = 6,
+  deletingPostId
+}: PostsGridProps) => {
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <h2 className="text-2xl font-bold">Blog Posts</h2>
-        <button
-          onClick={onCreate}
-          className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition-colors"
-        >
-          Create New Post
-        </button>
-      </div>
-
-      {/* Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {posts.map(post => (
-          <BlogPostCard
-            key={post.id}
-            post={post}
-            onEdit={onEdit}
-            onDelete={onDelete}
-          />
+    <div className="min-h-screen bg-gray-50 p-6">
+      {/* Grid Layout */}
+      <div className="grid grid-cols-1 gap-8 mb-8">
+        {posts.map((post) => (
+          <div key={post.id} className="flex justify-center">
+            <PostCard 
+              post={post} 
+              onEdit={onEdit} 
+              onDelete={onDelete} 
+            />
+          </div>
         ))}
       </div>
+
+      {/* Pagination */}
+      {totalCount > itemsPerPage && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <Pagination
+            page={currentPage}
+            count={totalCount}
+            
+            
+          />
+        </div>
+      )}
     </div>
   );
-}
+};
+
+export default PostsGrid;
+export { PostCard, Pagination };

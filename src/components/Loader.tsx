@@ -1,34 +1,18 @@
-// components/Loader.tsx
 'use client';
 
-import { Spin } from 'antd';
-import type { SpinProps } from 'antd';
+import Lottie from 'react-lottie-player';
+import lottieJson from '@/components/animations/animation.json';
 
-interface LoaderProps extends SpinProps {
-    fullscreen?: boolean;
+function Loader() {
+    return (
+        <div className="flex items-center justify-center min-h-screen">
+            <Lottie
+                play
+                loop
+                animationData={lottieJson}
+                style={{ height: '150px', width: '150px'}}
+            />
+        </div >
+    );
 }
-
-const Loader: React.FC<LoaderProps> = ({ fullscreen = false, ...props }) => {
-    if (fullscreen) {
-        return (
-            <div style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                zIndex: 1000,
-                backgroundColor: 'transparent', 
-            }}>
-                <Spin {...props}  />
-            </div>
-        );
-    }
-
-    return <Spin {...props} />;
-};
-
 export default Loader;

@@ -55,9 +55,9 @@ const SingleTeacherPage = async (props: {
               <Image
                 src={teacher.img || "/noAvatar.png"}
                 alt=""
-                width={144}
-                height={144}
-                className="w-36 h-36 rounded-full object-cover"
+                width={136}
+                height={136}
+                className=" rounded-full object-cover"
               />
             </div>
             <div className="w-2/3 flex flex-col justify-between gap-4">

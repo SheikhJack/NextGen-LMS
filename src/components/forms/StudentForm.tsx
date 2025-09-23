@@ -10,7 +10,7 @@ import { createStudent, updateStudent } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { CldUploadWidget } from "next-cloudinary";
-import { ActionState } from '@/lib/types';
+import { ActionState } from '@/lib/types/types';
 
 const StudentForm = ({
   type,
@@ -20,7 +20,7 @@ const StudentForm = ({
 }: {
   type: "create" | "update";
   data?: any;
-  setOpen: Dispatch<SetStateAction<boolean>>;
+  setOpen:  (open: boolean) => void; 
   relatedData?: any;
 }) => {
   const {

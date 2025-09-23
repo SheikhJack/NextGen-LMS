@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ToastContainer } from "react-toastify";
+import { Toaster, toast } from 'sonner';
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -22,7 +23,8 @@ export default function RootLayout({
       <html lang="en">
         <body className={inter.className}>
           <LayoutWrapper>
-            {children} <ToastContainer position="bottom-right" theme="dark" />
+            {children} 
+            <Toaster />
           </LayoutWrapper>
         </body>
       </html>

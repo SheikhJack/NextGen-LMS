@@ -12,14 +12,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
-const SingleStudentPage = async ({
-  params: { id },
-}: {
-  params: { id: string };
+const SingleStudentPage = async (props: {
+  params: Promise<{ id: string }>;
 }) => {
-  const { sessionClaims } = await auth();
-    const role = await getUserRole();
+  const params = await props.params;
+  const { id } = params;
   
+  const { sessionClaims } = await auth();
+  const role = await getUserRole();
 
   const student:
     | (Student & {

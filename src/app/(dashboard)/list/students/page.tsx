@@ -15,7 +15,7 @@ type StudentList = Student & { class: Class };
 const StudentListPage = async (props: {
   searchParams: Promise<{ [key: string]: string | undefined }>;
 }) => {
-  // Await the searchParams Promise
+  
   const searchParams = await props.searchParams;
   
   const page = searchParams.page;

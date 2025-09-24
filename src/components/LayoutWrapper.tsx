@@ -1,4 +1,3 @@
-// components/LayoutWrapper.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -22,9 +21,7 @@ export default function LayoutWrapper({
     return (
         <>
             {loading && <Loader
-                fullscreen
-                size="large"
-                tip="Loading..."
+                
             />}
             {!loading && children}
         </>

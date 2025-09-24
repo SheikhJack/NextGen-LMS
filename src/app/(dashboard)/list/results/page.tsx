@@ -6,7 +6,6 @@ import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import { Prisma } from "@prisma/client";
 import Image from "next/image";
-
 import { auth } from "@clerk/nextjs/server";
 import { getUserRole } from "@/lib/getUserRole";
 
@@ -22,18 +21,15 @@ type ResultList = {
   startTime: Date;
 };
 
-
-const ResultListPage = async ({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | undefined };
+const ResultListPage = async (props: {
+  searchParams: Promise<{ [key: string]: string | undefined }>;
 }) => {
 
+  const searchParams = await props.searchParams;
+  
   const { userId, sessionClaims } = await auth();
   const role = await getUserRole();
-
   const currentUserId = userId;
-
 
   const columns = [
     {
@@ -66,11 +62,11 @@ const ResultListPage = async ({
     },
     ...(role === "admin" || role === "teacher"
       ? [
-        {
-          header: "Actions",
-          accessor: "action",
-        },
-      ]
+          {
+            header: "Actions",
+            accessor: "action",
+          },
+        ]
       : []),
   ];
 
@@ -80,7 +76,7 @@ const ResultListPage = async ({
       className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
     >
       <td className="flex items-center gap-4 p-4">{item.title}</td>
-      <td>{item.studentName + " " + item.studentName}</td>
+      <td>{item.studentName + " " + item.studentSurname}</td>
       <td className="hidden md:table-cell">{item.score}</td>
       <td className="hidden md:table-cell">
         {item.teacherName + " " + item.teacherSurname}
@@ -103,11 +99,9 @@ const ResultListPage = async ({
   );
 
   const { page, ...queryParams } = searchParams;
-
   const p = page ? parseInt(page) : 1;
 
   // URL PARAMS CONDITION
-
   const query: Prisma.ResultWhereInput = {};
 
   if (queryParams) {
@@ -120,7 +114,9 @@ const ResultListPage = async ({
           case "search":
             query.OR = [
               { exam: { title: { contains: value, mode: "insensitive" } } },
+              { assignment: { title: { contains: value, mode: "insensitive" } } },
               { student: { name: { contains: value, mode: "insensitive" } } },
+              { student: { surname: { contains: value, mode: "insensitive" } } },
             ];
             break;
           default:
@@ -131,7 +127,6 @@ const ResultListPage = async ({
   }
 
   // ROLE CONDITIONS
-
   switch (role) {
     case "admin":
       break;
@@ -141,11 +136,9 @@ const ResultListPage = async ({
         { assignment: { lesson: { teacherId: currentUserId! } } },
       ];
       break;
-
     case "student":
       query.studentId = currentUserId!;
       break;
-
     case "parent":
       query.student = {
         parentId: currentUserId!,
@@ -163,7 +156,7 @@ const ResultListPage = async ({
         exam: {
           include: {
             lesson: {
-              select: {
+              include: {
                 class: { select: { name: true } },
                 teacher: { select: { name: true, surname: true } },
               },
@@ -173,7 +166,7 @@ const ResultListPage = async ({
         assignment: {
           include: {
             lesson: {
-              select: {
+              include: {
                 class: { select: { name: true } },
                 teacher: { select: { name: true, surname: true } },
               },
@@ -183,6 +176,9 @@ const ResultListPage = async ({
       },
       take: ITEM_PER_PAGE,
       skip: ITEM_PER_PAGE * (p - 1),
+      orderBy: {
+        id: 'desc', // Use id instead of createdAt
+      },
     }),
     prisma.result.count({ where: query }),
   ]);
@@ -192,7 +188,14 @@ const ResultListPage = async ({
 
     if (!assessment) return null;
 
-    const isExam = "startTime" in assessment;
+    let startTime: Date;
+    if ('startTime' in assessment) {
+      startTime = assessment.startTime;
+    } else if ('dueDate' in assessment) {
+      startTime = assessment.dueDate;
+    } else {
+      startTime = new Date();
+    }
 
     return {
       id: item.id,
@@ -203,9 +206,9 @@ const ResultListPage = async ({
       teacherSurname: assessment.lesson.teacher.surname,
       score: item.score,
       className: assessment.lesson.class.name,
-      startTime: isExam ? assessment.startTime : assessment.startDate,
+      startTime: startTime,
     };
-  });
+  }).filter((item): item is ResultList => item !== null);
 
   return (
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">

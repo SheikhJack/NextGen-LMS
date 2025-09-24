@@ -23,7 +23,7 @@ export function IncomeExpenseChart({ data }: IncomeExpenseChartProps) {
         <Tooltip 
           formatter={(value) => new Intl.NumberFormat('en-US', {
             style: 'currency',
-            currency: 'USD'
+            currency: 'BWP'
           }).format(Number(value))}
         />
         <Legend />

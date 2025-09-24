@@ -25,6 +25,12 @@ interface FinanceStats {
   totalExpenses: number;
 }
 
+interface ChartData {
+  month: string;
+  income: number;
+  expenses: number;
+}
+
 export default function FinanceDashboard() {
   const [stats, setStats] = useState<FinanceStats>({
     totalBalance: 0,
@@ -32,6 +38,9 @@ export default function FinanceDashboard() {
     outstandingFees: 0,
     totalExpenses: 0
   });
+  
+  const [chartData, setChartData] = useState<ChartData[]>([]);
+  const [collectionRate, setCollectionRate] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -40,7 +49,6 @@ export default function FinanceDashboard() {
 
   const fetchFinanceStats = async () => {
     try {
-      // Simulated data - replace with actual API call
       const mockStats: FinanceStats = {
         totalBalance: 45000,
         monthlyRevenue: 12000,
@@ -48,6 +56,22 @@ export default function FinanceDashboard() {
         totalExpenses: 8000
       };
       setStats(mockStats);
+
+      const generatedChartData: ChartData[] = [
+        { month: 'Jan', income: 10000, expenses: 7500 },
+        { month: 'Feb', income: 12000, expenses: 8000 },
+        { month: 'Mar', income: 11000, expenses: 8500 },
+        { month: 'Apr', income: mockStats.monthlyRevenue, expenses: mockStats.totalExpenses },
+        { month: 'May', income: 13000, expenses: 9000 },
+        { month: 'Jun', income: 14000, expenses: 9500 },
+      ];
+      setChartData(generatedChartData);
+
+      const rate = mockStats.monthlyRevenue + mockStats.outstandingFees > 0 
+        ? (mockStats.monthlyRevenue / (mockStats.monthlyRevenue + mockStats.outstandingFees)) * 100 
+        : 100;
+      setCollectionRate(rate);
+
     } catch (error) {
       console.error("Error fetching finance stats:", error);
     } finally {
@@ -118,13 +142,12 @@ export default function FinanceDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-
         <Card>
           <CardHeader>
             <CardTitle>Income vs Expenses</CardTitle>
           </CardHeader>
           <CardContent>
-            <IncomeExpenseChart />
+            <IncomeExpenseChart data={chartData} />
           </CardContent>
         </Card>
 
@@ -133,13 +156,12 @@ export default function FinanceDashboard() {
             <CardTitle>Fee Collection Rate</CardTitle>
           </CardHeader>
           <CardContent>
-            <CollectionRateChart />
+            <CollectionRateChart rate={collectionRate} />
           </CardContent>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Recent Transactions</CardTitle>

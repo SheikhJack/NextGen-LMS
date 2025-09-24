@@ -2388,7 +2388,7 @@ export const createDirectPayment = async (
 export const updatePaymentStatus = async (
   paymentId: string,
   status: TransactionStatus
-) => {
+): Promise<{ success: boolean; message: string; data?: any; error?: boolean }>  => {
   try {
     const { userId } = await auth();
     if (!userId) {
@@ -2399,6 +2399,8 @@ export const updatePaymentStatus = async (
       where: { id: paymentId },
       include: { student: true }
     });
+
+    
 
     if (!payment) {
       return { success: false, error: true, message: "Payment not found" };
@@ -2448,7 +2450,6 @@ export const updatePaymentStatus = async (
     revalidatePath("/finance/payments");
     return { 
       success: true, 
-      error: false,
       message: "Payment status updated successfully",
       data: updatedPayment
     };
@@ -2456,7 +2457,6 @@ export const updatePaymentStatus = async (
     console.error('Error updating payment status:', error);
     return { 
       success: false, 
-      error: true,
       message: error.message || "Failed to update payment status" 
     };
   }

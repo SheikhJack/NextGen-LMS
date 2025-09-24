@@ -88,12 +88,13 @@ export interface Expense {
 
 
 export interface BlogPost {
+  imagePublicId?: string;
   id: string;
   title: string;
   slug: string;
   content: string;
-  excerpt?: string;
-  imageUrl?: string;
+  excerpt?: string | null;
+  imageUrl?: string  | null;
   status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
   author: string;
   createdAt: string;
@@ -110,4 +111,16 @@ export interface PostCardData {
   author: string;
   slug: string;
   status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+}
+
+export interface PostsGridProps {
+  posts:  BlogPost[];
+  currentPage: number;
+  totalCount: number;
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
+  onPageChange: (newPage: number) => void;
+  itemsPerPage?: number;
+  onCreate: () => void;
+  deletingPostId?: string | null;
 }

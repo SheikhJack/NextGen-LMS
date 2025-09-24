@@ -4,20 +4,8 @@ import { useState, useActionState, useEffect } from 'react';
 import RichTextEditor from './RichTextEditor';
 import { updatePost } from '@/lib/actions';
 import { useAuth } from '@clerk/nextjs';
+import { BlogPost } from '@/lib/types';
 
-interface BlogPost {
-  id: string;
-  title: string;
-  slug: string;
-  content: string;
-  excerpt?: string;
-  imageUrl?: string;
-  imagePublicId?: string;
-  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
-  author: string;
-  createdAt: string;
-  publishedAt?: string;
-}
 
 interface EditPostModalProps {
   post: BlogPost;

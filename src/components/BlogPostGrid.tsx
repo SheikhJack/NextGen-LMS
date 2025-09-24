@@ -2,7 +2,7 @@ import { PostCard } from "./BlogPostCard";
 import  Pagination  from './Pagination';
 import { BlogPost } from "@/lib/types";
 
-interface PostsGridProps {
+export interface PostsGridProps {
   posts:  BlogPost[];
   currentPage: number;
   totalCount: number;

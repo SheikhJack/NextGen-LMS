@@ -40,14 +40,17 @@ export default function ExpensesPage() {
     pendingExpenses: 0
   });
 
+
+
   useEffect(() => {
     fetchExpenses();
     fetchStats();
   }, []);
 
-  useEffect(() => {
-    filterExpenses();
-  }, [searchTerm, selectedCategory, expenses]);
+
+
+
+
 
   const fetchExpenses = async () => {
     try {
@@ -62,6 +65,9 @@ export default function ExpensesPage() {
       setLoading(false);
     }
   };
+
+
+
 
   const fetchStats = async () => {
     try {
@@ -89,6 +95,12 @@ export default function ExpensesPage() {
 
     setFilteredExpenses(filtered);
   };
+
+  
+  useEffect(() => {
+    filterExpenses();
+  }, [searchTerm, selectedCategory, expenses, filterExpenses]);
+
 
 
 
@@ -151,6 +163,8 @@ export default function ExpensesPage() {
       setEditingExpense(null);
     }
   };
+
+
 
   if (loading) {
     return (

@@ -231,11 +231,8 @@ export default function PaymentsPage() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
-  useEffect(() => {
-    filterPayments();
-  }, [searchTerm, statusFilter, methodFilter, payments]);
 
   const filterPayments = () => {
     let filtered = payments;
@@ -258,6 +255,11 @@ export default function PaymentsPage() {
 
     setFilteredPayments(filtered);
   };
+
+
+  useEffect(() => {
+    filterPayments();
+  }, [searchTerm, statusFilter, methodFilter, payments, filterPayments]);
 
   const getStatusIcon = (status: string = 'PENDING') => {
     switch (status) {
@@ -303,13 +305,13 @@ export default function PaymentsPage() {
     setSelectedPayment(payment);
     setIsViewModalOpen(true);
   };
-  
+
 
   const handleUpdateStatus = async (paymentId: string, newStatus: Payment['status']) => {
     try {
       const toastId = toast.loading("Updating payment status...");
 
-      const result = await updatePaymentStatus(paymentId, newStatus);
+      const result = await updatePaymentStatus(paymentId, newStatus) as unknown as { success: boolean; message: string };
 
       if (result.success) {
         toast.success("Payment status updated successfully", { id: toastId });
@@ -321,7 +323,7 @@ export default function PaymentsPage() {
       console.error('Error updating payment status:', error);
       toast.error("Failed to update payment status");
     }
-  };
+  }
 
   const handleFormSubmit = async (paymentData: Omit<Payment, 'id'>) => {
     await addPayment(paymentData);
@@ -330,6 +332,8 @@ export default function PaymentsPage() {
   const handleExportClick = () => {
     handleExport('csv');
   };
+
+
 
   const handleExport = async (format: 'csv' | 'json' = 'csv') => {
     try {
@@ -378,7 +382,7 @@ export default function PaymentsPage() {
       new Date(payment.date).toLocaleDateString(),
       payment.method,
       payment.reference,
-      payment.status, 
+      payment.status,
       payment.description || ''
     ]);
 

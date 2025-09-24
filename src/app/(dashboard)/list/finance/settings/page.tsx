@@ -525,7 +525,7 @@ export default function FinanceSettingsPage() {
             Financial Year Settings
           </CardTitle>
           <CardDescription>
-            Set your organization's financial year start date
+            Set your organization&apos;s financial year start date
           </CardDescription>
         </CardHeader>
         <CardContent>

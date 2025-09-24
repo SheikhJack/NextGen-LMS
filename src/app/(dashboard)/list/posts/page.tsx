@@ -9,19 +9,12 @@ import Loader from '@/components/Loader';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
+import { BlogPost } from '@/lib/types';
 
-interface BlogPost {
-  id: string;
-  title: string;
-  slug: string;
-  content: string;
-  excerpt?: string;
-  imageUrl?: string;
-  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
-  author: string;
-  createdAt: string;
-  publishedAt?: string;
-}
+
+
+
+
 
 export default function BlogPage() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
@@ -52,7 +45,7 @@ export default function BlogPage() {
 
   useEffect(() => {
     loadPosts(currentPage);
-  }, []);
+  }, [currentPage]);
 
   const handleCreate = () => {
     setCreateModalOpen(true);
@@ -74,7 +67,7 @@ export default function BlogPage() {
       try {
         setDeletingPostId(postId);
         const result = await deletePost(postId);
-        
+
         if (result.success) {
           await loadPosts(currentPage);
           resolve('Post deleted successfully');
@@ -115,7 +108,7 @@ export default function BlogPage() {
             <div className="flex-1">
               <h3 className="font-semibold text-gray-900">Delete Post</h3>
               <p className="text-sm text-gray-600 mt-1">
-                Are you sure you want to delete "{post.title}"? This action cannot be undone.
+                Are you sure you want to delete &quot;{post.title}&quot;? This action cannot be undone.
               </p>
             </div>
           </div>
@@ -184,14 +177,14 @@ export default function BlogPage() {
           <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
             <div className="text-center sm:text-left">
               <p className="text-lg text-gray-600">
-                {totalCount > 0 
-                  ? `Showing ${posts.length} of ${totalCount} posts` 
+                {totalCount > 0
+                  ? `Showing ${posts.length} of ${totalCount} posts`
                   : 'No posts yet'
                 }
               </p>
             </div>
-            
-            <Button 
+
+            <Button
               onClick={handleCreate}
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors flex items-center gap-2 shadow-md hover:shadow-lg"
               size="lg"
@@ -222,7 +215,7 @@ export default function BlogPage() {
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">No posts yet</h3>
                 <p className="text-gray-600 mb-6">Get started by creating your first blog post.</p>
-                <Button 
+                <Button
                   onClick={handleCreate}
                   className="bg-blue-600 hover:bg-blue-700 text-white"
                 >

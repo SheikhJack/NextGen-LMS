@@ -15,7 +15,7 @@ export default async function SinglePostPage({ params }: SinglePostPageProps) {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Post Not Found</h1>
-          <p className="text-gray-600">The post you're looking for doesn't exist.</p>
+          <p className="text-gray-600">The post you&apos;re looking for doesn&apos;t exist.</p>
         </div>
       </div>
     );
@@ -24,6 +24,7 @@ export default async function SinglePostPage({ params }: SinglePostPageProps) {
   return (
     <article className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        
         {/* Header */}
         <header className="mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">{post.title}</h1>

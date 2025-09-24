@@ -17,6 +17,7 @@ const SingleTeacherPage = async (props: {
 }) => {
 
   const params = await props.params;
+  
   const { id } = params;
 
   const { sessionClaims } = await auth();
@@ -212,3 +213,29 @@ const SingleTeacherPage = async (props: {
 };
 
 export default SingleTeacherPage;
+
+export async function generateMetadata(props: { 
+  params: Promise<{ id: string }>;
+}) {
+  const params = await props.params;
+  const { id } = params;
+  
+  const teacher = await prisma.teacher.findUnique({
+    where: { id },
+    select: { name: true, surname: true }
+  });
+
+  if (!teacher) {
+    return {
+      title: 'Teacher Not Found',
+    };
+  }
+
+  return {
+    title: `${teacher.name} ${teacher.surname} - Teacher Profile`,
+  };
+}
+
+export async function generateStaticParams() {
+  return [];
+}

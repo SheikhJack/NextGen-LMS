@@ -17,16 +17,14 @@ type ExamList = Exam & {
   };
 };
 
-const ExamListPage = async ({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | undefined };
+const ExamListPage = async (props: {
+  searchParams: Promise<{ [key: string]: string | undefined }>;
 }) => {
-
+  // Await the searchParams Promise
+  const searchParams = await props.searchParams;
   const { userId, sessionClaims } = await auth();
   const role = await getUserRole();
   const currentUserId = userId;
-
 
   const columns = [
     {
@@ -49,11 +47,11 @@ const ExamListPage = async ({
     },
     ...(role === "admin" || role === "teacher"
       ? [
-        {
-          header: "Actions",
-          accessor: "action",
-        },
-      ]
+          {
+            header: "Actions",
+            accessor: "action",
+          },
+        ]
       : []),
   ];
 
@@ -84,14 +82,12 @@ const ExamListPage = async ({
   );
 
   const { page, ...queryParams } = searchParams;
-
   const p = page ? parseInt(page) : 1;
 
   // URL PARAMS CONDITION
-
   const query: Prisma.ExamWhereInput = {};
-
   query.lesson = {};
+
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
       if (value !== undefined) {
@@ -115,7 +111,6 @@ const ExamListPage = async ({
   }
 
   // ROLE CONDITIONS
-
   switch (role) {
     case "admin":
       break;
@@ -140,7 +135,6 @@ const ExamListPage = async ({
         },
       };
       break;
-
     default:
       break;
   }
@@ -159,6 +153,9 @@ const ExamListPage = async ({
       },
       take: ITEM_PER_PAGE,
       skip: ITEM_PER_PAGE * (p - 1),
+      orderBy: {
+        startTime: 'asc', // Added ordering by exam date
+      },
     }),
     prisma.exam.count({ where: query }),
   ]);

@@ -11,16 +11,13 @@ import { getUserRole } from "@/lib/getUserRole";
 
 type ClassList = Class & { supervisor: Teacher };
 
-const ClassListPage = async ({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | undefined };
+const ClassListPage = async (props: {
+  searchParams: Promise<{ [key: string]: string | undefined }>;
 }) => {
-
+  // Await the searchParams Promise
+  const searchParams = await props.searchParams;
   const { sessionClaims } = await auth();
   const role = await getUserRole();
-
-
 
   const columns = [
     {
@@ -44,11 +41,11 @@ const ClassListPage = async ({
     },
     ...(role === "admin"
       ? [
-        {
-          header: "Actions",
-          accessor: "action",
-        },
-      ]
+          {
+            header: "Actions",
+            accessor: "action",
+          },
+        ]
       : []),
   ];
 
@@ -77,11 +74,9 @@ const ClassListPage = async ({
   );
 
   const { page, ...queryParams } = searchParams;
-
   const p = page ? parseInt(page) : 1;
 
   // URL PARAMS CONDITION
-
   const query: Prisma.ClassWhereInput = {};
 
   if (queryParams) {
@@ -109,6 +104,9 @@ const ClassListPage = async ({
       },
       take: ITEM_PER_PAGE,
       skip: ITEM_PER_PAGE * (p - 1),
+      orderBy: {
+        name: 'asc', // Added ordering by class name
+      },
     }),
     prisma.class.count({ where: query }),
   ]);

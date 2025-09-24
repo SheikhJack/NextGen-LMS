@@ -17,16 +17,14 @@ type AssignmentList = Assignment & {
   };
 };
 
-const AssignmentListPage = async ({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | undefined };
+const AssignmentListPage = async (props: {
+  searchParams: Promise<{ [key: string]: string | undefined }>;
 }) => {
-
+  // Await the searchParams Promise
+  const searchParams = await props.searchParams;
   const { userId, sessionClaims } = await auth();
   const role = await getUserRole();
   const currentUserId = userId;
-
 
   const columns = [
     {
@@ -49,11 +47,11 @@ const AssignmentListPage = async ({
     },
     ...(role === "admin" || role === "teacher"
       ? [
-        {
-          header: "Actions",
-          accessor: "action",
-        },
-      ]
+          {
+            header: "Actions",
+            accessor: "action",
+          },
+        ]
       : []),
   ];
 
@@ -84,13 +82,10 @@ const AssignmentListPage = async ({
   );
 
   const { page, ...queryParams } = searchParams;
-
   const p = page ? parseInt(page) : 1;
 
   // URL PARAMS CONDITION
-
   const query: Prisma.AssignmentWhereInput = {};
-
   query.lesson = {};
 
   if (queryParams) {
@@ -116,7 +111,6 @@ const AssignmentListPage = async ({
   }
 
   // ROLE CONDITIONS
-
   switch (role) {
     case "admin":
       break;
@@ -159,9 +153,16 @@ const AssignmentListPage = async ({
       },
       take: ITEM_PER_PAGE,
       skip: ITEM_PER_PAGE * (p - 1),
+      orderBy: {
+        dueDate: 'asc', // Added ordering by due date
+      },
     }),
     prisma.assignment.count({ where: query }),
   ]);
+
+  // Fixed the conditional rendering syntax
+  const canCreateAssignment = role === "admin" || role === "teacher";
+
   return (
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
       {/* TOP */}
@@ -178,11 +179,9 @@ const AssignmentListPage = async ({
             <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
               <Image src="/sort.png" alt="" width={14} height={14} />
             </button>
-            {role === "admin" ||
-              (role === "teacher" && (
-                <FormModal table="assignment" type="create" />
-                
-              ))}
+            {canCreateAssignment && (
+              <FormModal table="assignment" type="create" />
+            )}
           </div>
         </div>
       </div>

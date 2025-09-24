@@ -9,21 +9,19 @@ import Image from "next/image";
 import { auth } from "@clerk/nextjs/server";
 import { getUserRole } from "@/lib/getUserRole";
 
-type LessonList = Lesson & { subject: Subject } & { class: Class } & {
+type LessonList = Lesson & { 
+  subject: Subject; 
+  class: Class; 
   teacher: Teacher;
 };
 
-
-const LessonListPage = async ({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | undefined };
+const LessonListPage = async (props: {
+  searchParams: Promise<{ [key: string]: string | undefined }>;
 }) => {
-
+  // Await the searchParams Promise
+  const searchParams = await props.searchParams;
   const { sessionClaims } = await auth();
   const role = await getUserRole();
-
-
 
   const columns = [
     {
@@ -41,11 +39,11 @@ const LessonListPage = async ({
     },
     ...(role === "admin"
       ? [
-        {
-          header: "Actions",
-          accessor: "action",
-        },
-      ]
+          {
+            header: "Actions",
+            accessor: "action",
+          },
+        ]
       : []),
   ];
 
@@ -73,11 +71,9 @@ const LessonListPage = async ({
   );
 
   const { page, ...queryParams } = searchParams;
-
   const p = page ? parseInt(page) : 1;
 
   // URL PARAMS CONDITION
-
   const query: Prisma.LessonWhereInput = {};
 
   if (queryParams) {
@@ -113,6 +109,9 @@ const LessonListPage = async ({
       },
       take: ITEM_PER_PAGE,
       skip: ITEM_PER_PAGE * (p - 1),
+      orderBy: {
+        subject: { name: 'asc' }, // Added ordering by subject name
+      },
     }),
     prisma.lesson.count({ where: query }),
   ]);

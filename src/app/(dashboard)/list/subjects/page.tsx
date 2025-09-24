@@ -11,14 +11,13 @@ import { getUserRole } from "@/lib/getUserRole";
 
 type SubjectList = Subject & { teachers: Teacher[] };
 
-const SubjectListPage = async ({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | undefined };
+const SubjectListPage = async (props: {
+  searchParams: Promise<{ [key: string]: string | undefined }>;
 }) => {
+  // Await the searchParams Promise
+  const searchParams = await props.searchParams;
   const { sessionClaims } = await auth();
-    const role = await getUserRole();
-  
+  const role = await getUserRole();
 
   const columns = [
     {
@@ -30,10 +29,14 @@ const SubjectListPage = async ({
       accessor: "teachers",
       className: "hidden md:table-cell",
     },
-    {
-      header: "Actions",
-      accessor: "action",
-    },
+    ...(role === "admin"
+      ? [
+          {
+            header: "Actions",
+            accessor: "action",
+          },
+        ]
+      : []),
   ];
 
   const renderRow = (item: SubjectList) => (
@@ -43,7 +46,7 @@ const SubjectListPage = async ({
     >
       <td className="flex items-center gap-4 p-4">{item.name}</td>
       <td className="hidden md:table-cell">
-        {item.teachers.map((teacher) => teacher.name).join(",")}
+        {item.teachers.map((teacher) => teacher.name).join(", ")}
       </td>
       <td>
         <div className="flex items-center gap-2">
@@ -59,11 +62,9 @@ const SubjectListPage = async ({
   );
 
   const { page, ...queryParams } = searchParams;
-
   const p = page ? parseInt(page) : 1;
 
   // URL PARAMS CONDITION
-
   const query: Prisma.SubjectWhereInput = {};
 
   if (queryParams) {
@@ -71,7 +72,10 @@ const SubjectListPage = async ({
       if (value !== undefined) {
         switch (key) {
           case "search":
-            query.name = { contains: value, mode: "insensitive" };
+            query.OR = [
+              { name: { contains: value, mode: "insensitive" } },
+              { teachers: { some: { name: { contains: value, mode: "insensitive" } } } },
+            ];
             break;
           default:
             break;
@@ -88,6 +92,9 @@ const SubjectListPage = async ({
       },
       take: ITEM_PER_PAGE,
       skip: ITEM_PER_PAGE * (p - 1),
+      orderBy: {
+        name: 'asc', // Added ordering by subject name
+      },
     }),
     prisma.subject.count({ where: query }),
   ]);

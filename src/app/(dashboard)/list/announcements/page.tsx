@@ -10,14 +10,14 @@ import { auth } from "@clerk/nextjs/server";
 import { getUserRole } from "@/lib/getUserRole";
 
 type AnnouncementList = Announcement & {
-  class: Class | null; // Keep as Class for include
+  class: Class | null;
 };
 
-const AnnouncementListPage = async ({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | undefined };
+const AnnouncementListPage = async (props: {
+  searchParams: Promise<{ [key: string]: string | undefined }>;
 }) => {
+  // Await the searchParams Promise
+  const searchParams = await props.searchParams;
   const { userId, sessionClaims } = await auth();
   const role = await getUserRole();
   const currentUserId = userId;
@@ -34,7 +34,7 @@ const AnnouncementListPage = async ({
     },
     {
       header: "Class",
-      accessor: "Class", // Keep as Class
+      accessor: "Class",
     },
     {
       header: "Date",
@@ -60,7 +60,7 @@ const AnnouncementListPage = async ({
       <td className="hidden lg:table-cell">
         {item.content?.substring(0, 50)}...
       </td>
-      <td>{item.class?.name || "-"}</td> {/* Use Class */}
+      <td>{item.class?.name || "-"}</td>
       <td className="hidden md:table-cell">
         {new Intl.DateTimeFormat("en-US").format(item.date)}
       </td>
@@ -121,7 +121,7 @@ const AnnouncementListPage = async ({
     prisma.announcement.findMany({
       where: query,
       include: {
-        class: true, 
+        class: true,
       },
       take: ITEM_PER_PAGE,
       skip: ITEM_PER_PAGE * (p - 1),

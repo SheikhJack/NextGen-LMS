@@ -79,7 +79,9 @@ export async function generateStaticParams() {
   return []; // Return empty array for dynamic generation
 }
 
-export async function generateMetadata({ params }: SinglePostPageProps) {
+// Fix: Await the params in generateMetadata
+export async function generateMetadata(props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   const post = await getPostBySlug(params.slug);
   
   if (!post) {

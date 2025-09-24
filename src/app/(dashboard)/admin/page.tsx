@@ -46,7 +46,7 @@ export default function FinanceDashboard() {
     outstandingFees: 0,
     totalExpenses: 0
   });
-  
+
   const [paymentStats, setPaymentStats] = useState<PaymentStats>({
     total: 0,
     completed: 0,
@@ -56,7 +56,7 @@ export default function FinanceDashboard() {
     completedAmount: 0,
     pendingAmount: 0
   });
-  
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -65,21 +65,17 @@ export default function FinanceDashboard() {
 
   const fetchFinanceData = async () => {
     try {
-      // Fetch financial overview
       const financialOverview = await getFinancialOverview();
-      
-      // Fetch payment statistics for monthly revenue calculation
+
       const paymentStatistics = await getPaymentStatistics();
-      
-      // Fetch school finance details for balance
+
       const schoolFinance = await getSchoolFinance();
 
-      // Calculate monthly revenue (last 30 days payments)
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
       
-      // For now, we'll use the completed payments amount as monthly revenue
-      // In a real implementation, you'd want to filter by date
+      
       const monthlyRevenue = paymentStatistics.completedAmount;
 
       const updatedStats: FinanceStats = {
@@ -93,7 +89,6 @@ export default function FinanceDashboard() {
       setPaymentStats(paymentStatistics);
     } catch (error) {
       console.error("Error fetching finance data:", error);
-      // Fallback to mock data if API fails
       const mockStats: FinanceStats = {
         totalBalance: 45000,
         monthlyRevenue: 12000,
@@ -106,23 +101,21 @@ export default function FinanceDashboard() {
     }
   };
 
+
+
   const handleQuickAction = async (action: string) => {
     try {
       switch (action) {
         case 'generate-invoice':
-          // Navigate to invoice generation page
           window.location.href = '/finance/invoices/new';
           break;
         case 'record-expense':
-          // Navigate to expense recording page
           window.location.href = '/finance/expenses/new';
           break;
         case 'record-payment':
-          // Navigate to payment recording page
           window.location.href = '/finance/payments/new';
           break;
         case 'download-reports':
-          // Trigger report download
           await downloadFinancialReport();
           break;
       }
@@ -131,16 +124,18 @@ export default function FinanceDashboard() {
     }
   };
 
+
+
   const downloadFinancialReport = async () => {
     try {
       // This would call your exportReport server action
       // For now, we'll create a simple CSV download
       const csvContent = `Financial Report,${new Date().toLocaleDateString()}
-Total Balance,${formatCurrency(stats.totalBalance)}
-Monthly Revenue,${formatCurrency(stats.monthlyRevenue)}
-Outstanding Fees,${formatCurrency(stats.outstandingFees)}
-Total Expenses,${formatCurrency(stats.totalExpenses)}
-Collection Rate,${((stats.monthlyRevenue / (stats.monthlyRevenue + stats.outstandingFees)) * 100).toFixed(2)}%`;
+      Total Balance,${formatCurrency(stats.totalBalance)}
+      Monthly Revenue,${formatCurrency(stats.monthlyRevenue)}
+      Outstanding Fees,${formatCurrency(stats.outstandingFees)}
+      Total Expenses,${formatCurrency(stats.totalExpenses)}
+      Collection Rate,${((stats.monthlyRevenue / (stats.monthlyRevenue + stats.outstandingFees)) * 100).toFixed(2)}%`;
 
       const blob = new Blob([csvContent], { type: 'text/csv' });
       const url = window.URL.createObjectURL(blob);
@@ -153,6 +148,8 @@ Collection Rate,${((stats.monthlyRevenue / (stats.monthlyRevenue + stats.outstan
       console.error('Error downloading report:', error);
     }
   };
+
+
 
   if (loading) {
     return (
@@ -227,7 +224,7 @@ Collection Rate,${((stats.monthlyRevenue / (stats.monthlyRevenue + stats.outstan
               </p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium">Amount Processed</CardTitle>
@@ -239,14 +236,14 @@ Collection Rate,${((stats.monthlyRevenue / (stats.monthlyRevenue + stats.outstan
               </p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium">Collection Rate</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {stats.monthlyRevenue + stats.outstandingFees > 0 
+                {stats.monthlyRevenue + stats.outstandingFees > 0
                   ? `${((stats.monthlyRevenue / (stats.monthlyRevenue + stats.outstandingFees)) * 100).toFixed(1)}%`
                   : '100%'
                 }
@@ -277,7 +274,7 @@ Collection Rate,${((stats.monthlyRevenue / (stats.monthlyRevenue + stats.outstan
                 <CardTitle>Income vs Expenses</CardTitle>
               </CardHeader>
               <CardContent>
-                <IncomeExpenseChart 
+                <IncomeExpenseChart
                   data={[
                     { month: 'Jan', income: stats.monthlyRevenue, expenses: stats.totalExpenses },
                     { month: 'Feb', income: stats.monthlyRevenue * 1.1, expenses: stats.totalExpenses * 0.9 },
@@ -292,9 +289,9 @@ Collection Rate,${((stats.monthlyRevenue / (stats.monthlyRevenue + stats.outstan
                 <CardTitle>Fee Collection Rate</CardTitle>
               </CardHeader>
               <CardContent>
-                <CollectionRateChart 
-                  rate={stats.monthlyRevenue + stats.outstandingFees > 0 
-                    ? (stats.monthlyRevenue / (stats.monthlyRevenue + stats.outstandingFees)) * 100 
+                <CollectionRateChart
+                  rate={stats.monthlyRevenue + stats.outstandingFees > 0
+                    ? (stats.monthlyRevenue / (stats.monthlyRevenue + stats.outstandingFees)) * 100
                     : 100
                   }
                 />
@@ -305,38 +302,38 @@ Collection Rate,${((stats.monthlyRevenue / (stats.monthlyRevenue + stats.outstan
           {/* RIGHT - Calendar and Side Components */}
           <div className="w-full lg:w-1/3 space-y-4">
             <EventCalendar />
-            
+
             <Card>
               <CardHeader>
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="w-full justify-start"
                   onClick={() => handleQuickAction('generate-invoice')}
                 >
                   <FileText className="w-4 h-4 mr-2" />
                   Generate Invoice
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="w-full justify-start"
                   onClick={() => handleQuickAction('record-expense')}
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Record Expense
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="w-full justify-start"
                   onClick={() => handleQuickAction('record-payment')}
                 >
                   <DollarSign className="w-4 h-4 mr-2" />
                   Record Payment
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="w-full justify-start"
                   onClick={() => handleQuickAction('download-reports')}
                 >
@@ -360,31 +357,31 @@ Collection Rate,${((stats.monthlyRevenue / (stats.monthlyRevenue + stats.outstan
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-green-500 h-2 rounded-full" 
-                      style={{ 
-                        width: `${Math.min(100, stats.totalExpenses > 0 ? (stats.totalBalance / stats.totalExpenses) * 10 : 100)}%` 
+                    <div
+                      className="bg-green-500 h-2 rounded-full"
+                      style={{
+                        width: `${Math.min(100, stats.totalExpenses > 0 ? (stats.totalBalance / stats.totalExpenses) * 10 : 100)}%`
                       }}
                     ></div>
                   </div>
-                  
+
                   <div className="flex justify-between mt-4">
                     <span className="text-sm">Collection Efficiency</span>
                     <span className="text-sm font-medium">
-                      {stats.monthlyRevenue + stats.outstandingFees > 0 
+                      {stats.monthlyRevenue + stats.outstandingFees > 0
                         ? `${((stats.monthlyRevenue / (stats.monthlyRevenue + stats.outstandingFees)) * 100).toFixed(1)}%`
                         : '100%'
                       }
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-blue-500 h-2 rounded-full" 
-                      style={{ 
-                        width: `${stats.monthlyRevenue + stats.outstandingFees > 0 
-                          ? (stats.monthlyRevenue / (stats.monthlyRevenue + stats.outstandingFees)) * 100 
+                    <div
+                      className="bg-blue-500 h-2 rounded-full"
+                      style={{
+                        width: `${stats.monthlyRevenue + stats.outstandingFees > 0
+                          ? (stats.monthlyRevenue / (stats.monthlyRevenue + stats.outstandingFees)) * 100
                           : 100
-                        }%` 
+                          }%`
                       }}
                     ></div>
                   </div>
@@ -414,13 +411,12 @@ function MetricCard({ title, value, trend, icon, color }: MetricCardProps) {
           <div>
             <p className="text-sm font-medium text-gray-600">{title}</p>
             <p className="text-xl font-bold">{formatCurrency(value)}</p>
-            <p className={`text-xs ${
-              trend.includes('+') || trend.includes('All Clear') 
-                ? 'text-green-600' 
-                : trend.includes('Attention') 
-                ? 'text-orange-600' 
+            <p className={`text-xs ${trend.includes('+') || trend.includes('All Clear')
+              ? 'text-green-600'
+              : trend.includes('Attention')
+                ? 'text-orange-600'
                 : 'text-red-600'
-            }`}>
+              }`}>
               {trend}
             </p>
           </div>

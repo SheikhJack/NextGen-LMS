@@ -1,16 +1,20 @@
+// @/components/finance/CollectionRateChart.tsx
 "use client";
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
-const data = [
-  { name: 'Paid', value: 75 },
-  { name: 'Pending', value: 15 },
-  { name: 'Overdue', value: 10 },
-];
+interface CollectionRateChartProps {
+  rate: number;
+}
 
-const COLORS = ['#10B981', '#F59E0B', '#EF4444'];
+export function CollectionRateChart({ rate }: CollectionRateChartProps) {
+  const data = [
+    { name: 'Collected', value: rate },
+    { name: 'Outstanding', value: 100 - rate }
+  ];
 
-export function CollectionRateChart() {
+  const COLORS = ['#00C49F', '#FF8042'];
+
   return (
     <ResponsiveContainer width="100%" height={300}>
       <PieChart>
@@ -19,8 +23,8 @@ export function CollectionRateChart() {
           cx="50%"
           cy="50%"
           labelLine={false}
-          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-          outerRadius={100}
+          label={({ name, value }) => `${name}: ${value.toFixed(1)}%`}
+          outerRadius={80}
           fill="#8884d8"
           dataKey="value"
         >
@@ -28,7 +32,7 @@ export function CollectionRateChart() {
             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
           ))}
         </Pie>
-        <Tooltip />
+        <Tooltip formatter={(value) => `${Number(value).toFixed(1)}%`} />
         <Legend />
       </PieChart>
     </ResponsiveContainer>

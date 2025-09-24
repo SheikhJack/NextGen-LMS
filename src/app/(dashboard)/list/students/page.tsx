@@ -2,23 +2,22 @@ import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
-
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import { Class, Prisma, Student } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
-
 import { auth } from "@clerk/nextjs/server";
 import { getUserRole } from "@/lib/getUserRole";
 
 type StudentList = Student & { class: Class };
 
-const StudentListPage = async ({
-  searchParams,
-}: {
- searchParams: { [key: string]: string | undefined };
+const StudentListPage = async (props: {
+  searchParams: Promise<{ [key: string]: string | undefined }>;
 }) => {
+  // Await the searchParams Promise
+  const searchParams = await props.searchParams;
+  
   const page = searchParams.page;
   const p = page ? parseInt(page) : 1;
 
@@ -29,10 +28,8 @@ const StudentListPage = async ({
     }
   }
 
-
   const { sessionClaims } = await auth();
-    const role = await getUserRole();
-  
+  const role = await getUserRole();
 
   const columns = [
     { header: "Info", accessor: "info" },
@@ -97,7 +94,14 @@ const StudentListPage = async ({
           };
           break;
         case "search":
-          query.name = { contains: value, mode: "insensitive" };
+          query.OR = [
+            { name: { contains: value, mode: "insensitive" } },
+            { username: { contains: value, mode: "insensitive" } },
+            { email: { contains: value, mode: "insensitive" } },
+          ];
+          break;
+        case "classId":
+          query.classId = value ? parseInt(value) : undefined;
           break;
         default:
           break;
@@ -111,6 +115,9 @@ const StudentListPage = async ({
       include: { class: true },
       take: ITEM_PER_PAGE,
       skip: ITEM_PER_PAGE * (p - 1),
+      orderBy: {
+        name: 'asc', // Added ordering by student name
+      },
     }),
     prisma.student.count({ where: query }),
   ]);

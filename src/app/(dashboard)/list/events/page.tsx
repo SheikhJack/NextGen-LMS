@@ -9,13 +9,13 @@ import Image from "next/image";
 import { auth } from "@clerk/nextjs/server";
 import { getUserRole } from "@/lib/getUserRole";
 
-type EventList = Event & { class: Class | null }; // class can be null
+type EventList = Event & { class: Class | null };
 
-const EventListPage = async ({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined };
+const EventListPage = async (props: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) => {
+  const searchParams = await props.searchParams;
+  
   const pageParam = searchParams.page;
   const page = typeof pageParam === "string" ? parseInt(pageParam) : 1;
 
@@ -98,9 +98,14 @@ const EventListPage = async ({
   
   if (roleCondition) {
     query.OR = [
+      ...(query.OR || []),
       { classId: null },
       { class: roleCondition },
     ];
+  } else if (role === "admin") {
+    if (!query.OR) {
+      query.OR = [{ classId: null }];
+    }
   } else {
     query.OR = [{ classId: null }];
   }

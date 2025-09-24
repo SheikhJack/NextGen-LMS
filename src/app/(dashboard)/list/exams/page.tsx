@@ -20,7 +20,6 @@ type ExamList = Exam & {
 const ExamListPage = async (props: {
   searchParams: Promise<{ [key: string]: string | undefined }>;
 }) => {
-  // Await the searchParams Promise
   const searchParams = await props.searchParams;
   const { userId, sessionClaims } = await auth();
   const role = await getUserRole();

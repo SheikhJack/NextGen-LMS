@@ -1,13 +1,11 @@
 import CloudinaryImage from '@/components/CloudinaryImage';
 import { getPostBySlug } from '@/lib/actions';
 
-interface SinglePostPageProps {
-  params: {
-    slug: string;
-  };
-}
-
-export default async function SinglePostPage({ params }: SinglePostPageProps) {
+export default async function SinglePostPage(props: {
+  params: Promise<{ slug: string }>;
+}) {
+  // Await the params Promise
+  const params = await props.params;
   const post = await getPostBySlug(params.slug);
 
   if (!post) {
@@ -79,8 +77,9 @@ export async function generateStaticParams() {
   return []; // Return empty array for dynamic generation
 }
 
-// Fix: Await the params in generateMetadata
-export async function generateMetadata(props: { params: Promise<{ slug: string }> }) {
+export async function generateMetadata(props: { 
+  params: Promise<{ slug: string }>;
+}) {
   const params = await props.params;
   const post = await getPostBySlug(params.slug);
   

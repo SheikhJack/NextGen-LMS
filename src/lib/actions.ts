@@ -474,30 +474,24 @@ export const updateTeacher = async (
       lastName: data.surname,
     };
 
-    // Only update password if provided
     if (data.password && data.password !== "") {
       updateData.password = data.password;
     }
 
-    // Update email if provided
     if (data.email) {
       updateData.emailAddress = [data.email];
     }
 
     await client.users.updateUser(id, updateData);
 
-    // Parse subjects and classes
     const subjectIds = data.subjects ? data.subjects.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id)) : [];
     const classIds = data.classes ? data.classes.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id)) : [];
 
-    // Handle image upload if a new image is provided
     let imageUrl = data.existingImageUrl;
     if (data.img && data.img.size > 0) {
       try {
-        // Delete old image if exists
         if (data.existingImageUrl) {
-          // You might want to extract public_id from the URL or store it separately
-          // await deleteImage(publicId);
+          
         }
         
         const uploadResult = await uploadImage(data.img);

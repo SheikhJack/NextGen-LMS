@@ -7,7 +7,9 @@ type InputFieldProps = {
   name: string;
   defaultValue?: string;
   error?: FieldError;
+  parentId?: string;
   hidden?: boolean;
+  placeholder?: string;
   inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
 };
 
@@ -16,7 +18,9 @@ const InputField = ({
   type = "text",
   register,
   name,
+  placeholder,
   defaultValue,
+  parentId,
   error,
   inputProps,
 }: InputFieldProps) => {

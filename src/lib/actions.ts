@@ -14,6 +14,7 @@ import {
   FeeCategorySchema
 } from "./formValidationSchemas";
 
+
 import prisma from "./prisma";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { ActionState } from "./types/index";
@@ -23,6 +24,7 @@ import { FeeCategory, StudentFee, TransactionStatus } from "@prisma/client";
 import { InvoiceStatus, PaymentMethod } from "@prisma/client";
 import { StudentFeeWithDetails } from "@/app/(dashboard)/list/finance/fees/page";
 import { uploadImage, deleteImage } from './cloudinary';
+import { any } from "zod";
 
 
 type CurrentState = { success: boolean; error: boolean };
@@ -50,6 +52,8 @@ interface ReportFilters {
 const getClerkClient = async () => {
   return await clerkClient();
 };
+
+
 
 
 export const getParents = async (params: {
@@ -593,32 +597,32 @@ export const deleteTeacher = async (
   }
 };
 
+
 export const createStudent = async (
   prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> => {
   try {
-    const data = {
-      username: formData.get('username') as string,
-      password: formData.get('password') as string,
-      name: formData.get('name') as string,
-      surname: formData.get('surname') as string,
-      email: formData.get('email') as string,
-      phone: formData.get('phone') as string,
-      address: formData.get('address') as string,
-      bloodType: formData.get('bloodType') as string,
-      sex: formData.get('sex') as "MALE" | "FEMALE",
-      birthday: new Date(formData.get('birthday') as string),
-      gradeId: Number(formData.get('gradeId')),
-      classId: Number(formData.get('classId')),
-      parentId: formData.get('parentId') as string,
-      img: formData.get('img') as string,
-    };
+    const username = formData.get('username') as string;
+    const password = formData.get('password') as string;
+    const name = formData.get('name') as string;
+    const surname = formData.get('surname') as string;
+    const email = formData.get('email') as string;
+    const phone = formData.get('phone') as string;
+    const address = formData.get('address') as string;
+    const bloodType = formData.get('bloodType') as string;
+    const sex = formData.get('sex') as "MALE" | "FEMALE";
+    const birthday = formData.get('birthday') as string;
+    const gradeId = formData.get('gradeId') as string;
+    const classId = formData.get('classId') as string;
+    const parentId = formData.get('parentId') as string;
+    const img = formData.get('img') as string;
 
-    console.log('Creating student with data:', data);
-
-    const requiredFields = ['username', 'password', 'name', 'surname'];
-    const missingFields = requiredFields.filter(field => !data[field as keyof typeof data]);
+    const requiredFields = ['username', 'name', 'surname', 'gradeId', 'classId'];
+    const missingFields = requiredFields.filter(field => {
+      const value = formData.get(field);
+      return !value || value.toString().trim() === '';
+    });
     
     if (missingFields.length > 0) {
       return {
@@ -628,15 +632,8 @@ export const createStudent = async (
       };
     }
 
-    if (data.email && !/\S+@\S+\.\S+/.test(data.email)) {
-      return {
-        success: false,
-        error: true,
-        message: "Invalid email format"
-      };
-    }
-
-    if (data.password.length < 8) {
+    // Validate password
+    if (!password || password.length < 8) {
       return {
         success: false,
         error: true,
@@ -644,12 +641,33 @@ export const createStudent = async (
       };
     }
 
+    // Convert string IDs to numbers
+    const gradeIdNum = parseInt(gradeId);
+    const classIdNum = parseInt(classId);
+
+    if (isNaN(gradeIdNum) || isNaN(classIdNum)) {
+      return {
+        success: false,
+        error: true,
+        message: "Invalid grade or class ID"
+      };
+    }
+
+    // Check class capacity
     const classItem = await prisma.class.findUnique({
-      where: { id: data.classId },
+      where: { id: classIdNum },
       include: { _count: { select: { students: true } } },
     });
 
-    if (classItem && classItem.capacity === classItem._count.students) {
+    if (!classItem) {
+      return {
+        success: false,
+        error: true,
+        message: "Selected class not found"
+      };
+    }
+
+    if (classItem.capacity === classItem._count.students) {
       return { 
         success: false, 
         error: true,
@@ -660,19 +678,17 @@ export const createStudent = async (
     const client = await getClerkClient();
     
     const userData: any = {
-      username: data.username,
-      password: data.password,
-      firstName: data.name,
-      lastName: data.surname,
+      username: username,
+      password: password,
+      firstName: name,
+      lastName: surname,
       publicMetadata: { role: "student" },
       skipPasswordChecks: true
     };
 
-    if (data.email) {
-      userData.emailAddress = [data.email];
+    if (email) {
+      userData.emailAddress = [email];
     }
-
-    console.log('Creating Clerk user with:', userData);
 
     let user;
     try {
@@ -698,20 +714,20 @@ export const createStudent = async (
 
     await prisma.student.create({
       data: {
-        id: user.id,
-        username: data.username,
-        name: data.name,
-        surname: data.surname,
-        email: data.email || null,
-        phone: data.phone || null,
-        address: data.address,
-        img: data.img || null,
-        bloodType: data.bloodType,
-        sex: data.sex,
-        birthday: data.birthday,
-        gradeId: data.gradeId,
-        classId: data.classId,
-        parentId: data.parentId,
+        id:  user.id, 
+        username: username,
+        email: email || null,
+        name: name,
+        surname: surname,
+        phone: phone || null,
+        address: address,
+        bloodType: bloodType,
+        birthday: new Date(birthday),
+        parentId: parentId || "",
+        sex: sex,
+        gradeId: gradeIdNum,
+        classId: classIdNum, 
+        img: img || null,
       },
     });
 
@@ -723,18 +739,6 @@ export const createStudent = async (
     
   } catch (err: any) {
     console.error('Error creating student:', err);
-    
-    if (err.clerkError && err.errors) {
-      const errorMessages = err.errors.map((error: any) => 
-        `${error.message} (code: ${error.code})`
-      ).join(', ');
-      
-      return { 
-        success: false, 
-        error: true,
-        message: `Registration failed: ${errorMessages}` 
-      };
-    }
     
     if (err.code === 'P2002') {
       return { 
@@ -751,6 +755,8 @@ export const createStudent = async (
     };
   }
 };
+
+
 
 
 export const getStudents = async () => {
@@ -892,6 +898,8 @@ export const updateStudent = async (
     };
   }
 };
+
+
 
 export const deleteStudent = async (
   currentState: CurrentState,
@@ -1103,6 +1111,8 @@ export const deleteAnnouncement = async (
     return { success: false, error: true };
   }
 };
+
+
 
 export const createEvent = async (
   currentState: CurrentState,

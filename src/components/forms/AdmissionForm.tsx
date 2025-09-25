@@ -51,7 +51,6 @@ export function AdmissionForm({ admission, onSubmit, onClose }: AdmissionFormPro
     currentAllergy: ""
   });
 
-  // Calculate suggested fee based on selected grade
   const suggestedFee = formData.grade ? gradeFeeStructure[formData.grade as keyof typeof gradeFeeStructure] || 500 : 500;
 
   const handleSubmit = (e: React.FormEvent) => {

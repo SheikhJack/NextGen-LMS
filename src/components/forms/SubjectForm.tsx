@@ -4,20 +4,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import InputField from "../InputField";
 import Image from "next/image";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
-import {
-  studentSchema,
-  StudentSchema,
-  teacherSchema,
-  TeacherSchema,
-} from "@/lib/formValidationSchemas";
+import { useEffect, useState } from "react";
+import { studentSchema, StudentSchema } from "@/lib/formValidationSchemas";
 import { useFormState } from "react-dom";
-import {
-  createStudent,
-  createTeacher,
-  updateStudent,
-  updateTeacher,
-} from "@/lib/actions";
+import { createStudent, updateStudent } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { CldUploadWidget } from "next-cloudinary";
@@ -30,7 +20,7 @@ const StudentForm = ({
 }: {
   type: "create" | "update";
   data?: any;
-  setOpen:  (open: boolean) => void; 
+  setOpen: (open: boolean) => void;
   relatedData?: any;
 }) => {
   const {
@@ -51,10 +41,23 @@ const StudentForm = ({
     }
   );
 
-  const onSubmit = handleSubmit((data) => {
-    console.log("hello");
-    console.log(data);
-    formAction({ ...data, img: img?.secure_url });
+  const onSubmit = handleSubmit((formData) => {
+    // Convert the form data to FormData object
+    const data = new FormData();
+    
+    // Append all form fields
+    Object.entries(formData).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        data.append(key, value.toString());
+      }
+    });
+    
+    // Append the image URL if it exists
+    if (img?.secure_url) {
+      data.append('img', img.secure_url);
+    }
+    
+    formAction(data);
   });
 
   const router = useRouter();
@@ -123,6 +126,18 @@ const StudentForm = ({
           );
         }}
       </CldUploadWidget>
+      {img?.secure_url && (
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-500">Preview:</span>
+          <Image 
+            src={img.secure_url} 
+            alt="Uploaded preview" 
+            width={50} 
+            height={50} 
+            className="rounded-full object-cover"
+          />
+        </div>
+      )}
       <div className="flex justify-between flex-wrap gap-4">
         <InputField
           label="First Name"
@@ -162,7 +177,7 @@ const StudentForm = ({
         <InputField
           label="Birthday"
           name="birthday"
-          defaultValue={data?.birthday.toISOString().split("T")[0]}
+          defaultValue={data?.birthday?.toISOString().split("T")[0]}
           register={register}
           error={errors.birthday}
           type="date"

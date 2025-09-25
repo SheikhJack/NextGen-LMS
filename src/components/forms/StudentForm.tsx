@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import InputField from "../InputField";
 import Image from "next/image";
-import { Dispatch, SetStateAction, useEffect, useState, useActionState, useRef } from "react";
+import { useEffect, useState, useActionState } from "react";
 import { studentSchema, StudentSchema } from "@/lib/formValidationSchemas";
 import { createStudent, updateStudent } from "@/lib/actions";
 import { useRouter } from "next/navigation";
@@ -20,20 +20,19 @@ const StudentForm = ({
 }: {
   type: "create" | "update";
   data?: any;
-  setOpen:  (open: boolean) => void; 
+  setOpen: (open: boolean) => void; 
   relatedData?: any;
 }) => {
   const {
     register,
     handleSubmit,
     formState: { errors },
-    setValue,
   } = useForm<StudentSchema>({
     resolver: zodResolver(studentSchema),
     defaultValues: {
       username: data?.username || "",
       email: data?.email || "",
-      password: "",
+      password: type === "create" ? "" : "********",
       name: data?.name || "",
       surname: data?.surname || "",
       phone: data?.phone || "",
@@ -41,15 +40,15 @@ const StudentForm = ({
       bloodType: data?.bloodType || "",
       sex: data?.sex || "MALE",
       birthday: data?.birthday ? new Date(data.birthday).toISOString().split('T')[0] : "",
-      gradeId: data?.gradeId || "",
-      classId: data?.classId || "",
+      gradeId: data?.gradeId ? String(data.gradeId) : "",
+      classId: data?.classId ? String(data.classId) : "",
       parentId: data?.parentId || "",
+      id: data?.id ? String(data.id) : undefined,
     },
   });
 
   const [img, setImg] = useState<any>();
   const router = useRouter();
-  const formRef = useRef<HTMLFormElement>(null);
 
   const [state, formAction, isPending] = useActionState(
     type === "create" ? createStudent : updateStudent,
@@ -60,31 +59,24 @@ const StudentForm = ({
     } as ActionState
   );
 
-  const additionalDataRef = useRef<FormData>();
-
-  const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    const formData = new FormData(event.currentTarget);
-
-    if (img?.secure_url) {
-      additionalDataRef.current = new FormData();
-      additionalDataRef.current.append('img', img.secure_url);
-    }
-
-    formAction(formData);
-  };
-
-  const interceptedFormAction = async (formData: FormData) => {
-    if (additionalDataRef.current) {
-      for (const [key, value] of additionalDataRef.current.entries()) {
-        formData.append(key, value);
+  const onSubmit = handleSubmit((formData) => {
+    const submitData = new FormData();
+    
+    Object.entries(formData).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        if (key === "password" && value === "********") {
+          return; // Skip password placeholder on update
+        }
+        submitData.append(key, value.toString());
       }
-      additionalDataRef.current = undefined;
+    });
+    
+    if (img?.secure_url) {
+      submitData.append('img', img.secure_url);
     }
-
-    return formAction(formData);
-  };
+    
+    formAction(submitData);
+  });
 
   useEffect(() => {
     if (state.success) {
@@ -98,14 +90,8 @@ const StudentForm = ({
 
   const { grades, classes } = relatedData;
 
-
   return (
-    <form
-      ref={formRef}
-      className="flex flex-col gap-8"
-      onSubmit={handleFormSubmit}
-      action={interceptedFormAction}
-    >
+    <form className="flex flex-col gap-8" onSubmit={onSubmit}>
       <h1 className="text-xl font-semibold">
         {type === "create" ? "Create a new student" : "Update the student"}
       </h1>
@@ -128,7 +114,7 @@ const StudentForm = ({
           error={errors?.email}
         />
         <InputField
-          label="Password"
+          label={type === "create" ? "Password" : "Password (leave blank to keep current)"}
           name="password"
           type="password"
           register={register}
@@ -147,18 +133,23 @@ const StudentForm = ({
           widget.close();
         }}
       >
-        {({ open }) => {
-          return (
-            <div
-              className="text-xs text-gray-500 flex items-center gap-2 cursor-pointer"
-              onClick={() => open()}
-            >
-              <Image src="/upload.png" alt="" width={28} height={28} />
-              <span>Upload a photo</span>
-            </div>
-          );
-        }}
+        {({ open }) => (
+          <div
+            className="text-xs text-gray-500 flex items-center gap-2 cursor-pointer"
+            onClick={() => open()}
+          >
+            <Image src="/upload.png" alt="" width={28} height={28} />
+            <span>Upload a photo</span>
+          </div>
+        )}
       </CldUploadWidget>
+
+      {img?.secure_url && (
+        <div className="flex items-center gap-2">
+          <Image src={img.secure_url} alt="Preview" width={50} height={50} className="rounded-full" />
+          <span className="text-xs text-green-600">Photo uploaded</span>
+        </div>
+      )}
 
       <div className="flex justify-between flex-wrap gap-4">
         <InputField
@@ -199,7 +190,7 @@ const StudentForm = ({
           error={errors.birthday}
         />
         <InputField
-          label="Parent Id"
+          label="Parent Id (Optional)"
           name="parentId"
           register={register}
           error={errors.parentId}
@@ -219,9 +210,7 @@ const StudentForm = ({
             <option value="FEMALE">Female</option>
           </select>
           {errors.sex?.message && (
-            <p className="text-xs text-red-400">
-              {errors.sex.message.toString()}
-            </p>
+            <p className="text-xs text-red-400">{errors.sex.message.toString()}</p>
           )}
         </div>
 
@@ -229,18 +218,17 @@ const StudentForm = ({
           <label className="text-xs text-gray-500">Grade</label>
           <select
             className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
-            {...register("gradeId", { valueAsNumber: true })}
+            {...register("gradeId")}
           >
+            <option value="">Select Grade</option>
             {grades.map((grade: { id: number; level: number }) => (
-              <option value={grade.id} key={grade.id}>
-                {grade.level}
+              <option value={String(grade.id)} key={grade.id}>
+                Grade {grade.level}
               </option>
             ))}
           </select>
           {errors.gradeId?.message && (
-            <p className="text-xs text-red-400">
-              {errors.gradeId.message.toString()}
-            </p>
+            <p className="text-xs text-red-400">{errors.gradeId.message.toString()}</p>
           )}
         </div>
 
@@ -248,42 +236,49 @@ const StudentForm = ({
           <label className="text-xs text-gray-500">Class</label>
           <select
             className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
-            {...register("classId", { valueAsNumber: true })}
+            {...register("classId")}
           >
-            {classes.map(
-              (classItem: {
-                id: number;
-                name: string;
-                capacity: number;
-                _count: { students: number };
-              }) => (
-                <option value={classItem.id} key={classItem.id}>
-                  ({classItem.name} -{" "}
-                  {classItem._count.students + "/" + classItem.capacity}{" "}
-                  Capacity)
-                </option>
-              )
-            )}
+            <option value="">Select Class</option>
+            {classes.map((classItem: {
+              id: number;
+              name: string;
+              capacity: number;
+              _count: { students: number };
+            }) => (
+              <option value={String(classItem.id)} key={classItem.id}>
+                {classItem.name} ({classItem._count.students}/{classItem.capacity})
+              </option>
+            ))}
           </select>
           {errors.classId?.message && (
-            <p className="text-xs text-red-400">
-              {errors.classId.message.toString()}
-            </p>
+            <p className="text-xs text-red-400">{errors.classId.message.toString()}</p>
           )}
         </div>
       </div>
 
       {state.error && state.message && (
-        <span className="text-red-500 text-sm">{state.message}</span>
+        <div className="text-red-500 text-sm p-2 bg-red-50 rounded">
+          {state.message}
+        </div>
       )}
 
-      <button
-        type="submit"
-        className="bg-blue-400 text-white p-2 rounded-md disabled:bg-gray-400"
-        disabled={isPending}
-      >
-        {isPending ? "Processing..." : type === "create" ? "Create" : "Update"}
-      </button>
+      <div className="flex gap-3 justify-end">
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+          disabled={isPending}
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          className="px-4 py-2 bg-blue-400 text-white rounded-md hover:bg-blue-500 disabled:bg-gray-400"
+          disabled={isPending}
+        >
+          {isPending ? "Processing..." : type === "create" ? "Create Student" : "Update Student"}
+        </button>
+      </div>
     </form>
   );
 };

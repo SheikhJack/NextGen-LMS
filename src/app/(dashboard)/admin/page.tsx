@@ -74,8 +74,8 @@ export default function FinanceDashboard() {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-      
-      
+
+
       const monthlyRevenue = paymentStatistics.completedAmount;
 
       const updatedStats: FinanceStats = {
@@ -211,49 +211,6 @@ export default function FinanceDashboard() {
           />
         </div>
 
-        {/* PAYMENT STATISTICS */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Total Payments</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{paymentStats.total}</div>
-              <p className="text-xs text-gray-600">
-                {paymentStats.completed} completed • {paymentStats.pending} pending
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Amount Processed</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(paymentStats.totalAmount)}</div>
-              <p className="text-xs text-gray-600">
-                {formatCurrency(paymentStats.completedAmount)} collected
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Collection Rate</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {stats.monthlyRevenue + stats.outstandingFees > 0
-                  ? `${((stats.monthlyRevenue / (stats.monthlyRevenue + stats.outstandingFees)) * 100).toFixed(1)}%`
-                  : '100%'
-                }
-              </div>
-              <p className="text-xs text-gray-600">
-                of expected revenue collected
-              </p>
-            </CardContent>
-          </Card>
-        </div>
 
         {/* MAIN CONTENT ROW */}
         <div className="flex flex-col lg:flex-row gap-4">
@@ -388,6 +345,50 @@ export default function FinanceDashboard() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* PAYMENT STATISTICS */}
+            <div className="flex flex-col  gap-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">Total Payments</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{paymentStats.total}</div>
+                  <p className="text-xs text-gray-600">
+                    {paymentStats.completed} completed • {paymentStats.pending} pending
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">Amount Processed</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{formatCurrency(paymentStats.totalAmount)}</div>
+                  <p className="text-xs text-gray-600">
+                    {formatCurrency(paymentStats.completedAmount)} collected
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">Collection Rate</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {stats.monthlyRevenue + stats.outstandingFees > 0
+                      ? `${((stats.monthlyRevenue / (stats.monthlyRevenue + stats.outstandingFees)) * 100).toFixed(1)}%`
+                      : '100%'
+                    }
+                  </div>
+                  <p className="text-xs text-gray-600">
+                    of expected revenue collected
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </div>

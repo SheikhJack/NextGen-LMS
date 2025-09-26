@@ -107,13 +107,13 @@ export default function FinanceDashboard() {
     try {
       switch (action) {
         case 'generate-invoice':
-          window.location.href = '/finance/invoices/new';
+          window.location.href = '/finance/invoices';
           break;
         case 'record-expense':
-          window.location.href = '/finance/expenses/new';
+          window.location.href = '/finance/expenses';
           break;
         case 'record-payment':
-          window.location.href = '/finance/payments/new';
+          window.location.href = '/finance/payments';
           break;
         case 'download-reports':
           await downloadFinancialReport();
